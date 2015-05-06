@@ -7,7 +7,8 @@ import numpy as np
 def rmse(var1, var2):
     return np.sqrt(((var1 - var2) ** 2).mean())
 
-
+def abs_diff(var1, var2):
+    return (np.absolute(var1 - var2)).mean()
 
 parser = argparse.ArgumentParser()
 parser.add_argument("file1")
@@ -26,6 +27,8 @@ for varname in sorted(file1.variables.keys()):
     var2 = file2.variables[varname].get_value()
     this_rmse = rmse(var1, var2)
     print("{var}: {rmse}".format(var=varname, rmse=this_rmse))
+    this_abs_diff = abs_diff(var1, var2)
+    print("{var}: {abs_diff}".format(var=varname, abs_diff=this_abs_diff))
 
 
           
