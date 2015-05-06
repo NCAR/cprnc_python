@@ -22,8 +22,8 @@ print(file1.variables.keys())
 for varname in sorted(file1.variables.keys()):
     if (file1.variables[varname].typecode()[0] == 'S'):
         continue
-    var1 = file1.variables[varname][:]
-    var2 = file2.variables[varname][:]
+    var1 = file1.variables[varname].get_value()
+    var2 = file2.variables[varname].get_value()
     this_rmse = rmse(var1, var2)
     print("{var}: {rmse}".format(var=varname, rmse=this_rmse))
 
