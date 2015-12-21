@@ -9,12 +9,22 @@ class VarDiffs:
         
     def vars_differ(self):
         return self._vars_differ
+
+    def masks_differ(self):
+        return self._masks_differ
     
     def _compute_stats(self, var_control, var_test):
         if (ma.allequal(var_control, var_test)):
             self._vars_differ = False
         else:
             self._vars_differ = True
+
+        if (np.array_equal(
+            ma.getmaskarray(var_control),
+            ma.getmaskarray(var_test))):
+            self._masks_differ = False
+        else:
+            self._masks_differ = True
 
         
             
