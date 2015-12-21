@@ -36,6 +36,13 @@ class TestVardiffs(unittest.TestCase):
 
         self.assertFalse(mydiffs.vars_differ())
 
+    def test_varsDiffer_withDifferentDims(self):
+        x = np.array([1,2,3])
+        y = np.array([1,2])
+        mydiffs = VarDiffs(x, y)
+
+        self.assertFalse(mydiffs.vars_differ())
+
     # ------------------------------------------------------------------------
     # Tests of masks_differ
     # ------------------------------------------------------------------------
@@ -74,8 +81,33 @@ class TestVardiffs(unittest.TestCase):
         mydiffs = VarDiffs(x, y)
 
         self.assertFalse(mydiffs.masks_differ())
-                
+
+    def test_masksDiffer_withDifferentDims(self):
+        x = np.array([1,2,3])
+        y = np.array([1,2])
+        mydiffs = VarDiffs(x, y)
+
+        self.assertFalse(mydiffs.masks_differ())
+    
+    # ------------------------------------------------------------------------
+    # Tests of dims_differ
+    # ------------------------------------------------------------------------
+
+    def test_dimsDiffer_withSameDims(self):
+        x = np.array([[1,2,3],[4,5,6]])
+        y = np.array([[1,2,3],[4,5,6]])
+        mydiffs = VarDiffs(x, y)
+
+        self.assertFalse(mydiffs.dims_differ())
+
+    def test_dimsDiffer_withDifferentDims(self):
+        x = np.array([[1,2,3],[4,5,6]])
+        y = np.array([[1,2],[3,4],[5,6]])
+        mydiffs = VarDiffs(x, y)
+
+        self.assertTrue(mydiffs.dims_differ())
         
+    # fixme: test masks differ with different dims
 
 
 if __name__ == '__main__':
