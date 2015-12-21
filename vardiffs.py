@@ -11,7 +11,9 @@ class VarDiffs:
     # Constructor and other special methods
     # ------------------------------------------------------------------------
 
-    def __init__(self, var1, var2):
+    def __init__(self, varname, var1, var2):
+        self._varname = varname
+
         # Compute all necessary statistics in initialization, so that we don't
         # have to hold onto the variables in memory for later use (in case the
         # variables consume a lot of memory).
