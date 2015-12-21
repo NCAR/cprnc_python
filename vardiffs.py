@@ -4,9 +4,19 @@ import numpy as np
 import numpy.ma as ma
 
 class VarDiffs:
+
+    # ------------------------------------------------------------------------
+    # Constructor and other special methods
+    # ------------------------------------------------------------------------
+
     def __init__(self, var1, var2):
         self._compute_stats(var1, var2)
-        
+
+
+    # ------------------------------------------------------------------------
+    # Public methods
+    # ------------------------------------------------------------------------
+
     def vars_differ(self):
         """Return True if the variables have any elements that differ.
 
@@ -22,8 +32,13 @@ class VarDiffs:
         return self._masks_differ
 
     def dims_differ(self):
+        """Return True if the variables' dimensions differ in shape or size."""
         return self._dims_differ
     
+    # ------------------------------------------------------------------------
+    # Private methods
+    # ------------------------------------------------------------------------
+
     def _compute_stats(self, var1, var2):
         self._dims_differ = self._compute_dims_differ(var1, var2)
         if (self.dims_differ()):
