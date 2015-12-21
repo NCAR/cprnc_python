@@ -14,11 +14,16 @@ class VarDiffs:
         return self._masks_differ
     
     def _compute_stats(self, var_control, var_test):
+        self._compute_vars_differ(var_control, var_test)
+        self._compute_masks_differ(var_control, var_test)
+        
+    def _compute_vars_differ(self, var_control, var_test):
         if (ma.allequal(var_control, var_test)):
             self._vars_differ = False
         else:
             self._vars_differ = True
 
+    def _compute_masks_differ(self, var_control, var_test):
         if (np.array_equal(
             ma.getmaskarray(var_control),
             ma.getmaskarray(var_test))):
@@ -26,6 +31,5 @@ class VarDiffs:
         else:
             self._masks_differ = True
 
-        
             
     
