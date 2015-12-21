@@ -107,8 +107,6 @@ class TestVardiffs(unittest.TestCase):
 
         self.assertTrue(mydiffs.dims_differ())
         
-    # fixme: test masks differ with different dims
-
 
 if __name__ == '__main__':
     unittest.main()
