@@ -4,12 +4,17 @@ import numpy as np
 import numpy.ma as ma
 
 class VarDiffs:
+    """This class holds a variety of statistics about the differences between
+    two variables."""
 
     # ------------------------------------------------------------------------
     # Constructor and other special methods
     # ------------------------------------------------------------------------
 
     def __init__(self, var1, var2):
+        # Compute all necessary statistics in initialization, so that we don't
+        # have to hold onto the variables in memory for later use (in case the
+        # variables consume a lot of memory).
         self._compute_stats(var1, var2)
 
 
@@ -23,16 +28,19 @@ class VarDiffs:
         Only consider points that are unmasked in both variables.
         
         If dimension sizes / shapes differ, return False."""
+
         return self._vars_differ
 
     def masks_differ(self):
         """Return True if the variables' masks differ.
 
         If dimension sizes / shapes differ, return False."""
+
         return self._masks_differ
 
     def dims_differ(self):
         """Return True if the variables' dimensions differ in shape or size."""
+
         return self._dims_differ
     
     # ------------------------------------------------------------------------
