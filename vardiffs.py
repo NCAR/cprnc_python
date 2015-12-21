@@ -4,8 +4,8 @@ import numpy as np
 import numpy.ma as ma
 
 class VarDiffs:
-    def __init__(self, var_control, var_test):
-        self._compute_stats(var_control, var_test)
+    def __init__(self, var1, var2):
+        self._compute_stats(var1, var2)
         
     def vars_differ(self):
         """Return True if the variables have any elements that differ.
@@ -24,34 +24,34 @@ class VarDiffs:
     def dims_differ(self):
         return self._dims_differ
     
-    def _compute_stats(self, var_control, var_test):
-        self._compute_dims_differ(var_control, var_test)
+    def _compute_stats(self, var1, var2):
+        self._dims_differ = self._compute_dims_differ(var1, var2)
         if (self.dims_differ()):
             self._vars_differ = False
             self._masks_differ = False
         else:
-            self._compute_vars_differ(var_control, var_test)
-            self._compute_masks_differ(var_control, var_test)
+            self._vars_differ = self._compute_vars_differ(var1, var2)
+            self._masks_differ = self._compute_masks_differ(var1, var2)
 
-    def _compute_dims_differ(self, var_control, var_test):
-        if (var_control.shape == var_test.shape):
-            self._dims_differ = False
+    def _compute_dims_differ(self, var1, var2):
+        if (var1.shape == var2.shape):
+            return False
         else:
-            self._dims_differ = True
+            return True
     
-    def _compute_vars_differ(self, var_control, var_test):
-        if (ma.allequal(var_control, var_test)):
-            self._vars_differ = False
+    def _compute_vars_differ(self, var1, var2):
+        if (ma.allequal(var1, var2)):
+            return False
         else:
-            self._vars_differ = True
+            return True
 
-    def _compute_masks_differ(self, var_control, var_test):
+    def _compute_masks_differ(self, var1, var2):
         if (np.array_equal(
-            ma.getmaskarray(var_control),
-            ma.getmaskarray(var_test))):
-            self._masks_differ = False
+            ma.getmaskarray(var1),
+            ma.getmaskarray(var2))):
+            return False
         else:
-            self._masks_differ = True
+            return True
 
             
     
