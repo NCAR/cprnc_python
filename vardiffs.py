@@ -12,12 +12,31 @@ class VarDiffs:
     # ------------------------------------------------------------------------
 
     def __init__(self, varname, var1, var2):
+        """Create a VarDiffs object.
+
+        Arguments:
+        varname: string
+        var1: numpy array
+        var2: numpy array"""
+        
         self._varname = varname
 
         # Compute all necessary statistics in initialization, so that we don't
         # have to hold onto the variables in memory for later use (in case the
         # variables consume a lot of memory).
         self._compute_stats(var1, var2)
+
+    def __str__(self):
+        mystr = ""
+        if self.vars_differ():
+            mystr = mystr + \
+              "RMS {varname:<32}{rms:11.4E}".format(varname=self._varname, rms=self._rmse) + \
+              " " * 11 + \
+              "NORMALIZED {normalized:11.4E}".format(normalized=self._normalized_rmse) + \
+              "\n\n"
+            
+        return mystr
+        
 
 
     # ------------------------------------------------------------------------
@@ -58,6 +77,14 @@ class VarDiffs:
             self._vars_differ = self._compute_vars_differ(var1, var2)
             self._masks_differ = self._compute_masks_differ(var1, var2)
 
+        if (self._vars_differ):
+            self._rmse = self._compute_rmse(var1, var2)
+            # fixme: change the following
+            self._normalized_rmse = self._rmse / 2
+        else:
+            self._rmse = 0.
+            self._normalized_rmse = 0.
+
     def _compute_dims_differ(self, var1, var2):
         if (var1.shape == var2.shape):
             return False
@@ -77,6 +104,9 @@ class VarDiffs:
             return False
         else:
             return True
+
+    def _compute_rmse(self, var1, var2):
+        return np.sqrt(((var1 - var2) ** 2).mean())
 
             
     

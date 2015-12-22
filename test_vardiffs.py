@@ -114,7 +114,32 @@ class TestVardiffs(unittest.TestCase):
         mydiffs = self.create_vardiffs(x, y)
 
         self.assertTrue(mydiffs.dims_differ())
-        
+
+    # ------------------------------------------------------------------------
+    # Tests of __str__
+    # ------------------------------------------------------------------------
+
+    def test_str_differHasRMS(self):
+        # If two variables differ, then the resulting string should contain 'RMS'
+        x = np.array([1., 2., 3.])
+        y = np.array([1., 2., 4.])
+        mydiffs = self.create_vardiffs(x, y)
+
+        mystr = str(mydiffs)
+
+        self.assertRegexpMatches(mystr, 'RMS')
+
+    def test_str_sameDoesNotHaveRMS(self):
+        # If two variables are the same, then the resulting string should not
+        # contain 'RMS'
+        x = np.array([1., 2., 3.])
+        y = np.array([1., 2., 3.])
+        mydiffs = self.create_vardiffs(x, y)
+
+        mystr = str(mydiffs)
+
+        self.assertNotRegexpMatches(mystr, 'RMS')
+
 
 if __name__ == '__main__':
     unittest.main()
