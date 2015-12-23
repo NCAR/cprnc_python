@@ -1,0 +1,4 @@
+To run all unit tests, run:
+
+make test
+
