@@ -1,7 +1,7 @@
 # Wrapper for scipy.io.netcdf, providing a common interface
 
 from scipy.io.netcdf import netcdf_file
-import numpy as np
+from netcdf_utils import apply_fillvalue
 
 class netcdf:
     def __init__(self, filename, mode='r'):
@@ -17,8 +17,7 @@ class netcdf:
         # small differences from the given _FillValue, rather than requiring an
         # exact match.
         var = self._file.variables[varname]
-        data = var[:].copy()
-        data = self._apply_mask(data, var._attributes)
+        data = apply_fillvalue(var[:].copy(), var._attributes)
         return data
 
     def get_filename(self):
@@ -30,32 +29,3 @@ class netcdf:
         # I don't like accessing the private _attributes variable, but I don't
         # see any other way to do this
         return self._file._attributes
-
-    # TODO(wjs, 2015-12-23) Consider moving this to a separate module (e.g.,
-    # netcdf_utils): it takes a numpy array and a dictionary of attributes, and
-    # does the filling.
-    #
-    # One advantage of moving it is that we could unit test it better from
-    # elsewhere.
-    @staticmethod
-    def _apply_mask(data, attributes):
-        """
-        If the given variable has a _FillValue or missing_value attribute, then
-        convert the data to a numpy.ma array with the appropriate mask.
-
-        Arguments:
-        data: numpy array
-        attributes: dictionary of attributes
-        var: netcdf_variable
-        """
-
-        missing_value = None
-        if '_FillValue' in attributes:
-            missing_value = attributes['_FillValue']
-        elif 'missing_value' in attributes:
-            missing_value = attributes['missing_value']
-
-        if missing_value is None:
-            return data
-        else:
-            return np.ma.masked_equal(data, missing_value)
