@@ -8,10 +8,6 @@ import numpy.ma as ma
 from numpy_assertions import NumpyAssertions
 from netcdf_scipy_adapter import netcdf
 
-# TODO(wjs, 2015-12-23) Is there a way to run all of these tests twice?: first
-# with 'from netcdf_scipy_adapter import netcdf', and then with 'from
-# netcdf4_adapter import_netcdf'
-
 class TestNetcdfScipyAdapter(unittest.TestCase, NumpyAssertions):
 
     TESTFILE_BASIC = 'test_inputs/testfile_basic.nc'
