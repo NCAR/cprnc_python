@@ -8,6 +8,10 @@ class netcdf_scipy_adapter:
         self._file = netcdf_file(filename, mode)
         self._filename = filename
 
+    def get_varlist(self):
+        """Returns an iterable list of variables in the netcdf file"""
+        return self._file.variables.keys()
+
     def get_vardata(self, varname):
         # NOTE(wjs, 2015-12-23) We do our own application of the mask, rather
         # than relying on the maskandscale argument to netcdf_file, for two

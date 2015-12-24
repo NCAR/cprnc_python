@@ -11,7 +11,13 @@ from netcdf_scipy_adapter import netcdf_scipy_adapter as netcdf
 class TestNetcdfScipyAdapter(unittest.TestCase, NumpyAssertions):
 
     TESTFILE_BASIC = 'test_inputs/testfile_basic.nc'
-    
+
+    def test_getVarlist_withBasicData(self):
+        mynetcdf = netcdf(self.TESTFILE_BASIC)
+        myvars = sorted(mynetcdf.get_varlist())
+        self.assertEqual(myvars, ['lat','lon','testvar','testvar2_hasfill','testvar3','time'])
+
+
     def test_getVardata_withBasicData(self):
         mynetcdf = netcdf(self.TESTFILE_BASIC)
         mydata = mynetcdf.get_vardata('testvar')
