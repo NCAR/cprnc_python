@@ -16,17 +16,19 @@ class TestNetcdfScipyAdapter(unittest.TestCase, NumpyAssertions):
 
     TESTFILE_BASIC = 'test_inputs/testfile_basic.nc'
     
-    def test_getData_withBasicData(self):
+    def test_getVardata_withBasicData(self):
         mynetcdf = netcdf(self.TESTFILE_BASIC)
         mydata = mynetcdf.get_vardata('testvar')
         expected = np.array([[[1.,2.],[3.,4.],[5.,6.],[7.,8.],[9.,10.]]])
         self.assertArraysEqual(mydata, expected)
 
 
-    def test_getData_withFillValue(self):
+    def test_getVardata_withFillValue(self):
+        IRRELEVANT_VAL = 9999.
         mynetcdf = netcdf(self.TESTFILE_BASIC)
         mydata = mynetcdf.get_vardata('testvar2_hasfill')
-        expected = ma.array([[[2.,4.],[6.,8.],[10.,12.],[14.,16.],[18.,20.]]],
+        expected = ma.array([[[2.,4.],[6.,8.],[10.,IRRELEVANT_VAL],
+                              [14.,16.],[18.,20.]]],
                             mask=[[[False,False],[False,False],[False,True],
                                    [False,False],[False,False]]])
         self.assertArraysEqual(mydata, expected)
@@ -35,7 +37,7 @@ class TestNetcdfScipyAdapter(unittest.TestCase, NumpyAssertions):
         mynetcdf = netcdf(self.TESTFILE_BASIC)
         self.assertEqual(self.TESTFILE_BASIC, mynetcdf.get_filename())
 
-    def test_get_global_attributes(self):
+    def test_getGlobalAttributes(self):
         mynetcdf = netcdf(self.TESTFILE_BASIC)
         myatts = mynetcdf.get_global_attributes()
         expected = {'attribute1':'foo1', 'attribute2':'foo2', 'attribute3':'foo3'}

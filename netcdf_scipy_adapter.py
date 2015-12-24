@@ -5,43 +5,21 @@ import numpy as np
 
 class netcdf:
     def __init__(self, filename, mode='r'):
-        # For now, using mmap = False, because if we let this be true, we get
-        # the following warning when a netcdf object is deleted:
-        #
-        # RuntimeWarning: Cannot close a netcdf_file opened with mmap=True, when
-        # netcdf_variables or arrays referring to its data still exist. All data
-        # arrays obtained from such files refer directly to data on disk, and
-        # must be copied before the file can be cleanly closed. (See netcdf_file
-        # docstring for more information on mmap.)
-        #
-        # I have a feeling this is due to the netcdf object getting garbage
-        # collected before the data read from it is garbage collected.
-        #
-        # An alternative to setting mmap = False may be to make a copy of the
-        # data in all cases in get_vardata
-        mmap = False
-
-        try:
-            self._file = netcdf_file(filename, mode, mmap=mmap, maskandscale=True)
-            self._has_maskandscale = True
-        except TypeError:
-            # For versions of scipy.io.netcdf that do not yet support
-            # maskandscale, we need to implement this operation ourselves
-            self._file = netcdf_file(filename, mode, mmap=mmap)
-            self._has_maskandscale = False
-
+        self._file = netcdf_file(filename, mode)
         self._filename = filename
 
     def get_vardata(self, varname):
+        # NOTE(wjs, 2015-12-23) We do our own application of the mask, rather
+        # than relying on the maskandscale argument to netcdf_file, for two
+        # reasons: (1) maskandscale was added very recently, and is not yet
+        # supported in any scipy release, (2) the application of the mask using
+        # the maskandscale option is not ideal - for example, it allows for
+        # small differences from the given _FillValue, rather than requiring an
+        # exact match.
         var = self._file.variables[varname]
-        # FIXME(wjs, 2015-12-23) Remove the following line
-        return var[:]
-        if (self._has_maskandscale):
-            return var[:]
-        else:
-            data = var[:].copy()
-            data = self._apply_mask(data, var)
-
+        data = var[:].copy()
+        data = self._apply_mask(data, var._attributes)
+        return data
 
     def get_filename(self):
         return self._filename
@@ -54,24 +32,28 @@ class netcdf:
         return self._file._attributes
 
     # TODO(wjs, 2015-12-23) Consider moving this to a separate module (e.g.,
-    # netcdf_utils): it takes a numpy array and a dictionary of attributes
-    # (var._attributes in this case), and does the filling
+    # netcdf_utils): it takes a numpy array and a dictionary of attributes, and
+    # does the filling.
+    #
+    # One advantage of moving it is that we could unit test it better from
+    # elsewhere.
     @staticmethod
-    def _apply_mask(data, var):
+    def _apply_mask(data, attributes):
         """
         If the given variable has a _FillValue or missing_value attribute, then
         convert the data to a numpy.ma array with the appropriate mask.
 
         Arguments:
         data: numpy array
+        attributes: dictionary of attributes
         var: netcdf_variable
         """
 
         missing_value = None
-        if '_FillValue' in var._attributes:
-            missing_value = var._attributes['_FillValue']
-        elif 'missing_value' in var._attributes:
-            missing_value = var._attributes['missing_value']
+        if '_FillValue' in attributes:
+            missing_value = attributes['_FillValue']
+        elif 'missing_value' in attributes:
+            missing_value = attributes['missing_value']
 
         if missing_value is None:
             return data
