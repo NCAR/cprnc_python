@@ -6,7 +6,7 @@ import unittest
 import numpy as np
 import numpy.ma as ma
 from numpy_assertions import NumpyAssertions
-from netcdf_scipy_adapter import netcdf
+from netcdf_scipy_adapter import netcdf_scipy_adapter as netcdf
 
 class TestNetcdfScipyAdapter(unittest.TestCase, NumpyAssertions):
 

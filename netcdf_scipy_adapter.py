@@ -3,7 +3,7 @@
 from scipy.io.netcdf import netcdf_file
 from netcdf_utils import apply_fillvalue
 
-class netcdf:
+class netcdf_scipy_adapter:
     def __init__(self, filename, mode='r'):
         self._file = netcdf_file(filename, mode)
         self._filename = filename
