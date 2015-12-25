@@ -32,6 +32,16 @@ class FileDiffs:
 
         return sum([var.vars_differ() for var in self._vardiffs_list])
 
+    def num_masks_differ(self):
+        """Return a count of the number of variables with masks that differ."""
+
+        return sum([var.masks_differ() for var in self._vardiffs_list])
+
+    def num_dims_differ(self):
+        """Return a count of the number of variables with dims that differ."""
+
+        return sum([var.dims_differ() for var in self._vardiffs_list])
+
     # ------------------------------------------------------------------------
     # Private methods
     # ------------------------------------------------------------------------
