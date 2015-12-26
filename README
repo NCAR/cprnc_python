@@ -1,4 +1,20 @@
+Testing
+-------
+
 To run all unit tests, run:
 
 make test
 
+Design notes
+------------
+
+* For each variable, we compute and save all needed statistics on the variable
+  in the initialization of that variable's object. These statistics can then be
+  queried or printed later.
+
+  This is more complex than just computing statistics as we need them (e.g., by
+  the __str__ method). However, the current design allows the variable's data to
+  be garbage collected after the computations are done. This, in turn, allows
+  the separation of computation from printing of results, which could lend
+  itself better to parallelization of the computations.
+  
