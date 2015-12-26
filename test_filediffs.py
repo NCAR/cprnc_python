@@ -136,6 +136,9 @@ class TestFilediffs(unittest.TestCase):
 
     # ------------------------------------------------------------------------
     # Tests of __str__
+    #
+    # Currently we just test the critical piece: the final statement of whether
+    # the files are DIFFERENT or IDENTICAL
     # ------------------------------------------------------------------------
 
     def test_str_differ(self):
@@ -148,6 +151,7 @@ class TestFilediffs(unittest.TestCase):
         mydiffs = FileDiffs(file1, file2)
         mystr = str(mydiffs)
         self.assertRegexpMatches(mystr, "diff_test.*DIFFERENT")
+        self.assertNotRegexpMatches(mystr, "diff_test.*IDENTICAL")
 
     def test_str_identical(self):
         file1 = netcdf_fake(
@@ -159,3 +163,4 @@ class TestFilediffs(unittest.TestCase):
         mydiffs = FileDiffs(file1, file2)
         mystr = str(mydiffs)
         self.assertRegexpMatches(mystr, "diff_test.*IDENTICAL")
+        self.assertNotRegexpMatches(mystr, "diff_test.*DIFFERENT")
