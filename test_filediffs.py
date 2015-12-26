@@ -164,3 +164,6 @@ class TestFilediffs(unittest.TestCase):
         mystr = str(mydiffs)
         self.assertRegexpMatches(mystr, "diff_test.*IDENTICAL")
         self.assertNotRegexpMatches(mystr, "diff_test.*DIFFERENT")
+
+if __name__ == '__main__':
+    unittest.main()
