@@ -4,8 +4,8 @@
 # Public functions
 # ------------------------------------------------------------------------
 
-def dim_str(dims):
-    """Convert a list of dimension sizes into a pretty string for printing."""
+def index_str(dims):
+    """Convert a list of indices into a pretty string for printing."""
 
     if (len(dims) == 0):
         return ""

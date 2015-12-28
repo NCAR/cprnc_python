@@ -3,7 +3,7 @@
 from __future__ import print_function
 
 import unittest
-from print_utils import dim_str
+from print_utils import index_str
 
 class TestPrintUtils(unittest.TestCase):
 
@@ -22,19 +22,19 @@ class TestPrintUtils(unittest.TestCase):
         return string.replace(" ", "")
 
     # ------------------------------------------------------------------------
-    # Tests of dim_str
+    # Tests of index_str
     # ------------------------------------------------------------------------
 
-    def test_dimStr_with0d(self):
-        result = dim_str(())
+    def test_indexStr_with0d(self):
+        result = index_str(())
         self.assertEqual(self.remove_spaces(result), "")
 
-    def test_dimStr_with1d(self):
-        result = dim_str((17,))
+    def test_indexStr_with1d(self):
+        result = index_str((17,))
         self.assertEqual(self.remove_spaces(result), "(17)")
 
-    def test_dimStr_with3d(self):
-        result = dim_str((2,3,4))
+    def test_indexStr_with3d(self):
+        result = index_str((2,3,4))
         self.assertEqual(self.remove_spaces(result), "(2,3,4)")
 
 if __name__ == '__main__':

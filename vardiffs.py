@@ -16,8 +16,8 @@ class VarDiffs:
 
         Arguments:
         varname: string
-        var1: numpy array
-        var2: numpy array"""
+        var1: numpy or numpy.ma array
+        var2: numpy or numpy.ma array"""
         
         self._varname = varname
 
