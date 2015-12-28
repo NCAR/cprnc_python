@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import numpy as np
 import numpy.ma as ma
+from varinfo import VarInfo
 
 class VarDiffs:
     """This class holds a variety of statistics about the differences between
@@ -21,15 +22,20 @@ class VarDiffs:
         
         self._varname = varname
 
+        self._var1info = VarInfo(varname, var1)
+        self._var2info = VarInfo(varname, var2)
+
         # Compute all necessary statistics in initialization, so that we don't
         # have to hold onto the variables in memory for later use (in case the
         # variables consume a lot of memory).
         self._compute_stats(var1, var2)
 
     def __str__(self):
-        mystr = ""
+        mystr = self._varname + "\n"
+        mystr += str(self._var1info)
+        mystr += str(self._var2info)
         if self.vars_differ():
-            mystr = mystr + \
+            mystr += \
               "RMS {varname:<32}{rms:11.4E}".format(varname=self._varname, rms=self._rmse) + \
               " " * 11 + \
               "NORMALIZED {normalized:11.4E}".format(normalized=self._normalized_rmse) + \
