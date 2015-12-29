@@ -4,13 +4,13 @@
 # Public functions
 # ------------------------------------------------------------------------
 
-def index_str(dims):
+def index_str(indices):
     """Convert a list of indices into a pretty string for printing."""
 
-    if (len(dims) == 0):
+    if (len(indices) == 0):
         return ""
     else:
-        return "(" + ",".join(map(_format_index, dims)) + ")"
+        return "(" + ",".join([_format_index(index) for index in indices]) + ")"
 
 
 # ------------------------------------------------------------------------
