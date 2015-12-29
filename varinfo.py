@@ -24,7 +24,8 @@ class VarInfo:
         # Compute all necessary statistics in initialization, so that we don't
         # have to hold onto the variable in memory for later use (in case the
         # variable consumes a lot of memory).
-        var = ma.array(var)
+        if not ma.isMA(var):
+            var = ma.array(var)
         self._compute_stats(var)
 
     def __str__(self):
