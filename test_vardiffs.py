@@ -128,7 +128,7 @@ class TestVardiffs(CustomAssertions):
 
         mystr = str(mydiffs)
 
-        self.assertRegexpMatches(mystr, 'RMS')
+        self.assertRegexMatches(mystr, 'RMS')
 
     def test_str_sameDoesNotHaveRMS(self):
         # If two variables are the same, then the resulting string should not
@@ -139,7 +139,7 @@ class TestVardiffs(CustomAssertions):
 
         mystr = str(mydiffs)
 
-        self.assertNotRegexpMatches(mystr, 'RMS')
+        self.assertNotRegexMatches(mystr, 'RMS')
 
 
 if __name__ == '__main__':
