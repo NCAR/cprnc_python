@@ -5,10 +5,10 @@ from __future__ import print_function
 import unittest
 import numpy as np
 import numpy.ma as ma
-from numpy_assertions import NumpyAssertions
+from custom_assertions import CustomAssertions
 from netcdf_scipy_adapter import netcdf_scipy_adapter as netcdf
 
-class TestNetcdfScipyAdapter(unittest.TestCase, NumpyAssertions):
+class TestNetcdfScipyAdapter(CustomAssertions):
 
     TESTFILE_BASIC = 'test_inputs/testfile_basic.nc'
 

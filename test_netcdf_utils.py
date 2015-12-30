@@ -5,10 +5,10 @@ from __future__ import print_function
 import unittest
 import numpy as np
 import numpy.ma as ma
-from numpy_assertions import NumpyAssertions
+from custom_assertions import CustomAssertions
 from netcdf_utils import apply_fillvalue
 
-class TestNetcdfUtils(unittest.TestCase, NumpyAssertions):
+class TestNetcdfUtils(CustomAssertions):
 
     # ------------------------------------------------------------------------
     # Tests of apply_fillvalue

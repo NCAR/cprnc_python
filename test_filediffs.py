@@ -7,9 +7,9 @@ from filediffs import FileDiffs
 from netcdf_fake import netcdf_fake
 import numpy as np
 import numpy.ma as ma
-import six
+from custom_assertions import CustomAssertions
 
-class TestFilediffs(unittest.TestCase):
+class TestFilediffs(CustomAssertions):
 
     FILENAME1 = 'foo1.nc'
     FILENAME2 = 'foo2.nc'
@@ -151,7 +151,7 @@ class TestFilediffs(unittest.TestCase):
             variables = {'var1': np.array([1,2,4])})
         mydiffs = FileDiffs(file1, file2)
         mystr = str(mydiffs)
-        six.assertRegex(self, mystr, "diff_test.*DIFFERENT")
+        self.assertRegexMatches(mystr, "diff_test.*DIFFERENT")
 
     def test_str_identical(self):
         file1 = netcdf_fake(
@@ -162,7 +162,7 @@ class TestFilediffs(unittest.TestCase):
             variables = {'var1': np.array([1,2,3])})
         mydiffs = FileDiffs(file1, file2)
         mystr = str(mydiffs)
-        six.assertRegex(self, mystr, "diff_test.*IDENTICAL")
+        self.assertRegexMatches(mystr, "diff_test.*IDENTICAL")
 
 if __name__ == '__main__':
     unittest.main()
