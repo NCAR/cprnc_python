@@ -42,10 +42,10 @@ class CustomAssertions(unittest.TestCase):
         myself.
         """
 
-        if (hasattr(self, 'assertRegexpMatches')):
-            self.assertRegexpMatches(string, regex)
-        elif (hasattr(self, 'assertRegex')):
+        if (hasattr(self, 'assertRegex')):
             self.assertRegex(string, regex)
+        elif (hasattr(self, 'assertRegexpMatches')):
+            self.assertRegexpMatches(string, regex)
         else:
             raise NotImplementedError("This version of unittest does not"
                                       "implement assertRegex")
@@ -57,10 +57,10 @@ class CustomAssertions(unittest.TestCase):
         The six package does not support this, so I'm implementing it here.
         """
 
-        if (hasattr(self, 'assertNotRegexpMatches')):
-            self.assertNotRegexpMatches(string, regex)
-        elif (hasattr(self, 'assertNotRegex')):
+        if (hasattr(self, 'assertNotRegex')):
             self.assertNotRegex(string, regex)
+        elif (hasattr(self, 'assertNotRegexpMatches')):
+            self.assertNotRegexpMatches(string, regex)
         else:
             raise NotImplementedError("This version of unittest does not"
                                       "implement assertNotRegex")

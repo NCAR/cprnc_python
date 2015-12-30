@@ -42,7 +42,7 @@ class TestNetcdfScipyAdapter(CustomAssertions):
     def test_getGlobalAttributes(self):
         mynetcdf = netcdf(self.TESTFILE_BASIC)
         myatts = mynetcdf.get_global_attributes()
-        expected = {'attribute1':'foo1', 'attribute2':'foo2', 'attribute3':'foo3'}
+        expected = {'attribute1':b'foo1', 'attribute2':b'foo2', 'attribute3':b'foo3'}
         self.assertEqual(expected, myatts)
     
 if __name__ == '__main__':
