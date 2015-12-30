@@ -151,7 +151,6 @@ class TestFilediffs(unittest.TestCase):
         mydiffs = FileDiffs(file1, file2)
         mystr = str(mydiffs)
         self.assertRegexpMatches(mystr, "diff_test.*DIFFERENT")
-        self.assertNotRegexpMatches(mystr, "diff_test.*IDENTICAL")
 
     def test_str_identical(self):
         file1 = netcdf_fake(
@@ -163,7 +162,6 @@ class TestFilediffs(unittest.TestCase):
         mydiffs = FileDiffs(file1, file2)
         mystr = str(mydiffs)
         self.assertRegexpMatches(mystr, "diff_test.*IDENTICAL")
-        self.assertNotRegexpMatches(mystr, "diff_test.*DIFFERENT")
 
 if __name__ == '__main__':
     unittest.main()
