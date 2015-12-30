@@ -6,8 +6,9 @@ import unittest
 from vardiffs import VarDiffs
 import numpy as np
 import numpy.ma as ma
+from custom_assertions import CustomAssertions
 
-class TestVardiffs(unittest.TestCase):
+class TestVardiffs(CustomAssertions):
 
     # ------------------------------------------------------------------------
     # Helper methods

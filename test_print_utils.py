@@ -3,9 +3,10 @@
 from __future__ import print_function
 
 import unittest
+from custom_assertions import CustomAssertions
 from print_utils import index_str
 
-class TestPrintUtils(unittest.TestCase):
+class TestPrintUtils(CustomAssertions):
 
     # ------------------------------------------------------------------------
     # Helper methods
