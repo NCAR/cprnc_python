@@ -152,6 +152,7 @@ class TestFilediffs(CustomAssertions):
         mydiffs = FileDiffs(file1, file2)
         mystr = str(mydiffs)
         self.assertRegexMatches(mystr, "diff_test.*DIFFERENT")
+        self.assertNotRegexMatches(mystr, "diff_test.*IDENTICAL")
 
     def test_str_identical(self):
         file1 = netcdf_fake(
@@ -163,6 +164,7 @@ class TestFilediffs(CustomAssertions):
         mydiffs = FileDiffs(file1, file2)
         mystr = str(mydiffs)
         self.assertRegexMatches(mystr, "diff_test.*IDENTICAL")
+        self.assertNotRegexMatches(mystr, "diff_test.*DIFFERENT")
 
 if __name__ == '__main__':
     unittest.main()

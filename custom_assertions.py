@@ -50,3 +50,18 @@ class CustomAssertions(unittest.TestCase):
             raise NotImplementedError("This version of unittest does not"
                                       "implement assertRegex")
 
+    def assertNotRegexMatches(self, string, regex):
+        """
+        Wrapper for assertNotRegexpMatches (python2) / assertNotRegex (python3).
+
+        The six package does not support this, so I'm implementing it here.
+        """
+
+        if (hasattr(self, 'assertNotRegexpMatches')):
+            self.assertNotRegexpMatches(string, regex)
+        elif (hasattr(self, 'assertNotRegex')):
+            self.assertNotRegex(string, regex)
+        else:
+            raise NotImplementedError("This version of unittest does not"
+                                      "implement assertNotRegex")
+
