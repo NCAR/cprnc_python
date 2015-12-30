@@ -65,3 +65,18 @@ class CustomAssertions(unittest.TestCase):
             raise NotImplementedError("This version of unittest does not"
                                       "implement assertNotRegex")
 
+    def assertSameItems(self, actual, expected):
+        """
+        Wrapper for assertItemsEqual (python2) / assertCountEqual (python3).
+
+        We could use the six package for this purpose, but since I'm already
+        handling other assertions here, I'm adding this one for consistency.
+        """
+
+        if (hasattr(self, 'assertCountEqual')):
+            self.assertCountEqual(actual, expected)
+        elif (hasattr(self, 'assertItemsEqual')):
+            self.assertItemsEqual(actual, expected)
+        else:
+            raise NotImplementedError("This version of unittest does not"
+                                      "implement assertCountEqual")
