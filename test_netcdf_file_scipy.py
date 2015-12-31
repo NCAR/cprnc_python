@@ -29,11 +29,6 @@ class TestNetcdfFileScipy(CustomAssertions):
         dimsize = mynetcdf.get_dimsize('time')
         self.assertEqual(dimsize, 3)
 
-    def test_getDimsize_withNonexistentDimension(self):
-        mynetcdf = netcdf(self.TESTFILE_BASIC)
-        dimsize = mynetcdf.get_dimsize('nonexistent')
-        self.assertEqual(dimsize, 0)
-
     def test_getVarlist_withBasicData(self):
         mynetcdf = netcdf(self.TESTFILE_BASIC)
         myvars = sorted(mynetcdf.get_varlist())
