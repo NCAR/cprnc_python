@@ -1,5 +1,5 @@
 from __future__ import print_function
-from vardiffs import VarDiffs
+from vardiffs import (VarDiffsIndexInfo, VarDiffs)
 
 class FileDiffs(object):
     """This class computes statistics about the differences between two netcdf
@@ -101,7 +101,8 @@ class FileDiffs(object):
         """
 
         for varname in sorted(self._file1.get_varlist()):
-            self._add_one_vardiffs(varname)
+            index_info = VarDiffsIndexInfo.no_slicing()
+            self._add_one_vardiffs(varname, index_info)
 
 
     def _add_vardiffs_separated_by_dim(self, dimname):
@@ -114,10 +115,23 @@ class FileDiffs(object):
         """
 
         for (varname, index) in self._file1.get_varlist_bydim(dimname):
-            self._add_one_vardiffs(varname, {dimname:index})
+            # For now, assume that we want the same index in file2 as in file1.
+            #
+            # TODO(wjs, 2015-12-31) (optional) allow for different indices,
+            # based on reading the associated coordinate variable and finding
+            # the matching coordinate (e.g., matching time).
+            index_info = VarDiffsIndexInfo.dim_sliced(dimname, index, index)
+            self._add_one_vardiffs(varname, index_info, {dimname:index})
 
-    def _add_one_vardiffs(self, varname, dim_indices={}):
-        """Add one vardiffs object to self."""
+    def _add_one_vardiffs(self, varname, index_info, dim_indices={}):
+        """Add one vardiffs object to self.
+
+        Arguments:
+        varname: variable name
+        index_info: VarDiffsIndexInfo object
+        dim_indices: dictionary of (dimname:index) pairs giving dimension index or
+            indices to use for slicing the data (should agree with index_info)
+        """
 
         # FIXME(wjs, 2015-12-24) Add handling of var not in file2 (maybe add
         # a has_variable method to the netcdf class to help with this;
@@ -126,5 +140,6 @@ class FileDiffs(object):
         # FIXME(wjs, 2015-12-24) Add handling of non-numeric variables
         my_vardiffs = VarDiffs(varname,
                                self._file1.get_vardata(varname, dim_indices),
-                               self._file2.get_vardata(varname, dim_indices))
+                               self._file2.get_vardata(varname, dim_indices),
+                               index_info)
         self._vardiffs_list.append(my_vardiffs)
