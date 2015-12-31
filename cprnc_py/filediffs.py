@@ -9,16 +9,15 @@ class FileDiffs(object):
     # Constructor and other special methods
     # ------------------------------------------------------------------------
 
-    def __init__(self, file1, file2, separate_dim=None):
+    def __init__(self, file1, file2, separate_dim="time"):
         """Create a FileDiffs object.
 
         Arguments:
         file1: netcdf file object with methods get_varlist, get_vardata, etc.
         file2: netcdf file object
         separate_dim: name of dimension to separate along
-            If given (not None), then for variables containing the given
-            dimension, analysis is done separately for each slice along this
-            dimension
+            If not None or "", then for variables containing the given dimension,
+            analysis is done separately for each slice along this dimension
         """
 
         self._file1 = file1

@@ -22,7 +22,7 @@ class TestFilediffs(CustomAssertions):
         """Create a filediffs object where both files have 0 vars"""
         file1 = NetcdfFileFake(self.FILENAME1)
         file2 = NetcdfFileFake(self.FILENAME2)
-        return FileDiffs(file1, file2)
+        return FileDiffs(file1, file2, separate_dim=None)
         
 
     # ------------------------------------------------------------------------
@@ -45,7 +45,7 @@ class TestFilediffs(CustomAssertions):
             variables = {'var1': NetcdfVariableFake(np.array([99,2,3])),  # differs
                          'var2': NetcdfVariableFake(np.array([4,5,6])),   # same
                          'var3': NetcdfVariableFake(np.array([99,8,9]))}) # differs
-        mydiffs = FileDiffs(file1, file2)
+        mydiffs = FileDiffs(file1, file2, separate_dim=None)
         num_differ = mydiffs.num_vars_differ()
         self.assertEqual(num_differ, 2)
 
@@ -100,7 +100,7 @@ class TestFilediffs(CustomAssertions):
             variables = {'var1': NetcdfVariableFake(np.ma.array([1,2,3], mask=[False,True,False])),  # differs
                          'var2': NetcdfVariableFake(np.ma.array([4,5,6], mask=[False,True,False])),  # same
                          'var3': NetcdfVariableFake(np.ma.array([7,8,9], mask=[False,True,False]))}) # differs
-        mydiffs = FileDiffs(file1, file2)
+        mydiffs = FileDiffs(file1, file2, separate_dim=None)
         num_differ = mydiffs.num_masks_differ()
         self.assertEqual(num_differ, 2)
 
@@ -119,7 +119,7 @@ class TestFilediffs(CustomAssertions):
             variables = {'var1': NetcdfVariableFake(np.array([1,2])),       # differs
                          'var2': NetcdfVariableFake(np.array([4,5,6])),     # same
                          'var3': NetcdfVariableFake(np.array([7,8,9,10]))}) # differs
-        mydiffs = FileDiffs(file1, file2)
+        mydiffs = FileDiffs(file1, file2, separate_dim=None)
         num_differ = mydiffs.num_dims_differ()
         self.assertEqual(num_differ, 2)
 
@@ -151,7 +151,7 @@ class TestFilediffs(CustomAssertions):
         file2 = NetcdfFileFake(
             self.FILENAME2,
             variables = {'var1': NetcdfVariableFake(np.array([1,2,3]))})
-        mydiffs = FileDiffs(file1, file2)
+        mydiffs = FileDiffs(file1, file2, separate_dim=None)
         differ = mydiffs.files_differ()
         self.assertFalse(differ)
 
@@ -162,7 +162,7 @@ class TestFilediffs(CustomAssertions):
         file2 = NetcdfFileFake(
             self.FILENAME2,
             variables = {'var1': NetcdfVariableFake(np.array([1,2,4]))})
-        mydiffs = FileDiffs(file1, file2)
+        mydiffs = FileDiffs(file1, file2, separate_dim=None)
         differ = mydiffs.files_differ()
         self.assertTrue(differ)
 
@@ -173,7 +173,7 @@ class TestFilediffs(CustomAssertions):
         file2 = NetcdfFileFake(
             self.FILENAME2,
             variables = {'var1': NetcdfVariableFake(np.ma.array([1,2,3], mask=[False,True,False]))})
-        mydiffs = FileDiffs(file1, file2)
+        mydiffs = FileDiffs(file1, file2, separate_dim=None)
         differ = mydiffs.files_differ()
         self.assertTrue(differ)
 
@@ -184,7 +184,7 @@ class TestFilediffs(CustomAssertions):
         file2 = NetcdfFileFake(
             self.FILENAME2,
             variables = {'var1': NetcdfVariableFake(np.array([1,2]))})
-        mydiffs = FileDiffs(file1, file2)
+        mydiffs = FileDiffs(file1, file2, separate_dim=None)
         differ = mydiffs.files_differ()
         self.assertTrue(differ)
 
@@ -202,7 +202,7 @@ class TestFilediffs(CustomAssertions):
         file2 = NetcdfFileFake(
             self.FILENAME2,
             variables = {'var1': NetcdfVariableFake(np.array([1,2,4]))})
-        mydiffs = FileDiffs(file1, file2)
+        mydiffs = FileDiffs(file1, file2, separate_dim=None)
         mystr = str(mydiffs)
         self.assertRegexMatches(mystr, "diff_test.*DIFFERENT")
         self.assertNotRegexMatches(mystr, "diff_test.*IDENTICAL")
@@ -214,7 +214,7 @@ class TestFilediffs(CustomAssertions):
         file2 = NetcdfFileFake(
             self.FILENAME2,
             variables = {'var1': NetcdfVariableFake(np.array([1,2,3]))})
-        mydiffs = FileDiffs(file1, file2)
+        mydiffs = FileDiffs(file1, file2, separate_dim=None)
         mystr = str(mydiffs)
         self.assertRegexMatches(mystr, "diff_test.*IDENTICAL")
         self.assertNotRegexMatches(mystr, "diff_test.*DIFFERENT")
