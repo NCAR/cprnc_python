@@ -1,7 +1,7 @@
 from __future__ import print_function
 from vardiffs import VarDiffs
 
-class FileDiffs:
+class FileDiffs(object):
     """This class computes statistics about the differences between two netcdf
     files."""
 
@@ -9,18 +9,26 @@ class FileDiffs:
     # Constructor and other special methods
     # ------------------------------------------------------------------------
 
-    def __init__(self, file1, file2):
+    def __init__(self, file1, file2, separate_dim=None):
         """Create a FileDiffs object.
 
         Arguments:
         file1: netcdf file object with methods get_varlist, get_vardata, etc.
         file2: netcdf file object
+        separate_dim: name of dimension to separate along
+            If given (not None), then for variables containing the given
+            dimension, analysis is done separately for each slice along this
+            dimension
         """
 
         self._file1 = file1
         self._file2 = file2
 
-        self._add_vardiffs()
+        self._vardiffs_list = []
+        if separate_dim:
+            self._add_vardiffs_separated_by_dim(separate_dim)
+        else:
+            self._add_vardiffs()
 
     def __str__(self):
         mystr = ""
@@ -89,17 +97,34 @@ class FileDiffs:
     def _add_vardiffs(self):
         """Add all of the vardiffs to self.
 
-        Assumes that self._file1 and self._file2 have already been set."""
+        Assumes that self._file1 and self._file2 have already been set.
+        """
 
-        self._vardiffs_list = []
         for varname in sorted(self._file1.get_varlist()):
-            # FIXME(wjs, 2015-12-24) Add handling of var not in file2 (maybe add
-            # a has_variable method to the netcdf class to help with this;
-            # otherwise, could just let it throw an exception)
+            self._add_one_vardiffs(varname)
 
-            # FIXME(wjs, 2015-12-24) Add handling of non-numeric variables
 
-            my_vardiffs = VarDiffs(varname,
-                                   self._file1.get_vardata(varname),
-                                   self._file2.get_vardata(varname))
-            self._vardiffs_list.append(my_vardiffs)
+    def _add_vardiffs_separated_by_dim(self, dimname):
+        """Add all of the vardiffs to self.
+
+        For variables containing the given dimension, analysis is done
+        separately for each slice along this dimension.
+
+        Assumes that self._file1 and self._file2 have already been set.
+        """
+
+        for (varname, index) in self._file1.get_varlist_bydim(dimname):
+            self._add_one_vardiffs(varname, {dimname:index})
+
+    def _add_one_vardiffs(self, varname, dim_indices={}):
+        """Add one vardiffs object to self."""
+
+        # FIXME(wjs, 2015-12-24) Add handling of var not in file2 (maybe add
+        # a has_variable method to the netcdf class to help with this;
+        # otherwise, could just let it throw an exception)
+
+        # FIXME(wjs, 2015-12-24) Add handling of non-numeric variables
+        my_vardiffs = VarDiffs(varname,
+                               self._file1.get_vardata(varname, dim_indices),
+                               self._file2.get_vardata(varname, dim_indices))
+        self._vardiffs_list.append(my_vardiffs)

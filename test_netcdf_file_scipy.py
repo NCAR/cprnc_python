@@ -6,9 +6,14 @@ import unittest
 import numpy as np
 import numpy.ma as ma
 from custom_assertions import CustomAssertions
-from netcdf_scipy_adapter import netcdf_scipy_adapter as netcdf
+from netcdf_file_scipy import NetcdfFileScipy as netcdf
 
-class TestNetcdfScipyAdapter(CustomAssertions):
+class TestNetcdfFileScipy(CustomAssertions):
+    """This class provides tests of NetcdfFileScipy, as well as the
+    functionality in its base class (NetcdfFile).
+
+    This also provides test coverage of NetcdfVariableScipy and NetcdfVariable.
+    """
 
     TESTFILE_BASIC = 'test_inputs/testfile_basic.nc'
     TESTFILE_MULTIPLE_TIMES = 'test_inputs/testfile_multipleTimes_someTimeless.nc'
@@ -61,7 +66,6 @@ class TestNetcdfScipyAdapter(CustomAssertions):
         expected = np.array([[[1.,2.],[3.,4.],[5.,6.],[7.,8.],[9.,10.]]])
         self.assertArraysEqual(mydata, expected)
 
-
     def test_getVardata_withFillValue(self):
         IRRELEVANT_VAL = 9999.
         mynetcdf = netcdf(self.TESTFILE_BASIC)
@@ -76,6 +80,12 @@ class TestNetcdfScipyAdapter(CustomAssertions):
         mynetcdf = netcdf(self.TESTFILE_BASIC)
         mydata = mynetcdf.get_vardata('testvar', {'lon':1})
         expected = np.array([[  2.,   4.,   6.,   8.,  10.]])
+        self.assertArraysEqual(mydata, expected)
+
+    def test_getVardata_withDimSliceNone(self):
+        mynetcdf = netcdf(self.TESTFILE_BASIC)
+        mydata = mynetcdf.get_vardata('testvar', {'lon':None})
+        expected = np.array([[[1.,2.],[3.,4.],[5.,6.],[7.,8.],[9.,10.]]])
         self.assertArraysEqual(mydata, expected)
 
     def test_getVardata_with2DimSlices(self):
