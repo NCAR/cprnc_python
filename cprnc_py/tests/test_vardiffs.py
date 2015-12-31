@@ -3,10 +3,10 @@
 from __future__ import print_function
 
 import unittest
-from cprnc.vardiffs import VarDiffs
+from cprnc_py.vardiffs import VarDiffs
 import numpy as np
 import numpy.ma as ma
-from cprnc.test_utils.custom_assertions import CustomAssertions
+from cprnc_py.test_utils.custom_assertions import CustomAssertions
 
 class TestVardiffs(CustomAssertions):
 

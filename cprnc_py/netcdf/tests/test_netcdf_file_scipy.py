@@ -6,8 +6,8 @@ import unittest
 import numpy as np
 import numpy.ma as ma
 from os.path import (join, dirname)
-from cprnc.test_utils.custom_assertions import CustomAssertions
-from cprnc.netcdf.netcdf_file_scipy import NetcdfFileScipy as netcdf
+from cprnc_py.test_utils.custom_assertions import CustomAssertions
+from cprnc_py.netcdf.netcdf_file_scipy import NetcdfFileScipy as netcdf
 
 class TestNetcdfFileScipy(CustomAssertions):
     """This class provides tests of NetcdfFileScipy, as well as the
