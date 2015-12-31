@@ -5,4 +5,4 @@ Typical usage:
 from netcdf_wrapper import netcdf
 """
 
-from netcdf_file_scipy import NetcdfFileScipy as netcdf
+from cprnc.netcdf.netcdf_file_scipy import NetcdfFileScipy as netcdf

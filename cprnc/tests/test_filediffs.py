@@ -3,11 +3,11 @@
 from __future__ import print_function
 
 import unittest
-from filediffs import FileDiffs
-from netcdf_file_fake import NetcdfFileFake
-from netcdf_variable_fake import NetcdfVariableFake
+from cprnc.filediffs import FileDiffs
+from cprnc.netcdf.netcdf_file_fake import NetcdfFileFake
+from cprnc.netcdf.netcdf_variable_fake import NetcdfVariableFake
 import numpy as np
-from custom_assertions import CustomAssertions
+from cprnc.test_utils.custom_assertions import CustomAssertions
 
 class TestFilediffs(CustomAssertions):
 

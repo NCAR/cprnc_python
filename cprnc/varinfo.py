@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import numpy as np
 import numpy.ma as ma
-from print_utils import index_str
+from cprnc.print_utils import index_str
 
 class VarInfo(object):
     """This class computes and prints a variety of statistics about a single

@@ -5,8 +5,8 @@ from __future__ import print_function
 import unittest
 import numpy as np
 import numpy.ma as ma
-from custom_assertions import CustomAssertions
-from netcdf_utils import apply_fillvalue
+from cprnc.test_utils.custom_assertions import CustomAssertions
+from cprnc.netcdf.netcdf_utils import apply_fillvalue
 
 class TestNetcdfUtils(CustomAssertions):
 

@@ -1,5 +1,5 @@
-from netcdf_variable import NetcdfVariable
-from netcdf_utils import apply_fillvalue
+from cprnc.netcdf.netcdf_variable import NetcdfVariable
+from cprnc.netcdf.netcdf_utils import apply_fillvalue
 
 class NetcdfVariableScipy(NetcdfVariable):
     """Adapter for the scipy netcdf_variable class, making it adapt to a common

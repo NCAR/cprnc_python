@@ -1,4 +1,4 @@
-from netcdf_variable import NetcdfVariable
+from cprnc.netcdf.netcdf_variable import NetcdfVariable
 
 class NetcdfVariableFake(NetcdfVariable):
     """Fake replacement for a netcdf variable, for the sake of unit testing.

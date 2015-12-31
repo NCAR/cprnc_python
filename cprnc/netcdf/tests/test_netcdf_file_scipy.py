@@ -5,8 +5,9 @@ from __future__ import print_function
 import unittest
 import numpy as np
 import numpy.ma as ma
-from custom_assertions import CustomAssertions
-from netcdf_file_scipy import NetcdfFileScipy as netcdf
+from os.path import (join, dirname)
+from cprnc.test_utils.custom_assertions import CustomAssertions
+from cprnc.netcdf.netcdf_file_scipy import NetcdfFileScipy as netcdf
 
 class TestNetcdfFileScipy(CustomAssertions):
     """This class provides tests of NetcdfFileScipy, as well as the
@@ -15,8 +16,9 @@ class TestNetcdfFileScipy(CustomAssertions):
     This also provides test coverage of NetcdfVariableScipy and NetcdfVariable.
     """
 
-    TESTFILE_BASIC = 'test_inputs/testfile_basic.nc'
-    TESTFILE_MULTIPLE_TIMES = 'test_inputs/testfile_multipleTimes_someTimeless.nc'
+    TEST_DATA_PATH = join(dirname(__file__), 'test_inputs')
+    TESTFILE_BASIC = join(TEST_DATA_PATH, 'testfile_basic.nc')
+    TESTFILE_MULTIPLE_TIMES = join(TEST_DATA_PATH, 'testfile_multipleTimes_someTimeless.nc')
 
     def test_getDimsize_withBasicData(self):
         mynetcdf = netcdf(self.TESTFILE_BASIC)

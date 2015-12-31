@@ -2,7 +2,7 @@ from __future__ import print_function
 
 import numpy as np
 import numpy.ma as ma
-from varinfo import VarInfo
+from cprnc.varinfo import VarInfo
 
 class VarDiffsIndexInfo(object):
     """This class holds information about the slicing done to create a VarDiffs

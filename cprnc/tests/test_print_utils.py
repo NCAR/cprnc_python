@@ -3,8 +3,8 @@
 from __future__ import print_function
 
 import unittest
-from custom_assertions import CustomAssertions
-from print_utils import index_str
+from cprnc.test_utils.custom_assertions import CustomAssertions
+from cprnc.print_utils import index_str
 
 class TestPrintUtils(CustomAssertions):
 

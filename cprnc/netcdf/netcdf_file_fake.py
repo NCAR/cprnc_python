@@ -1,4 +1,4 @@
-from netcdf_file import NetcdfFile
+from cprnc.netcdf.netcdf_file import NetcdfFile
 
 class NetcdfFileFake(NetcdfFile):
     """Fake replacement for a netcdf adapter, for the sake of unit testing.

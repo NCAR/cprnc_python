@@ -1,5 +1,5 @@
 from __future__ import print_function
-from vardiffs import (VarDiffsIndexInfo, VarDiffs)
+from cprnc.vardiffs import (VarDiffsIndexInfo, VarDiffs)
 
 class FileDiffs(object):
     """This class computes statistics about the differences between two netcdf

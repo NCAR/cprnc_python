@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import unittest
-from custom_assertions import CustomAssertions
+from cprnc.test_utils.custom_assertions import CustomAssertions
 import numpy as np
 import numpy.ma as ma
 
