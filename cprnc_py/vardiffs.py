@@ -23,9 +23,20 @@ class VarDiffsIndexInfo(object):
     def __str__(self):
         if self._dimname is None:
             return ""
+        elif self._index1 is None and self._index2 is None:
+            return ""
         else:
-            return "{dimname} index: {index1:6d} {index2:6d}".format(
-                dimname=self._dimname, index1=self._index1, index2=self._index2)
+            if self._index1 is None:
+                index1_str = "   All"
+            else:
+                index1_str = "{:6d}".format(self._index1 + 1)
+            if self._index2 is None:
+                index2_str = "   All"
+            else:
+                index2_str = "{:6d}".format(self._index2 + 1)
+
+            return "{dimname} index: {index1} {index2}".format(
+                dimname=self._dimname, index1=index1_str, index2=index2_str)
 
     @classmethod
     def no_slicing(cls):
@@ -164,9 +175,13 @@ class VarDiffs(object):
         vars_differ must already be set for self."""
 
         if (self.vars_differ()):
-            return np.sqrt(((var1 - var2) ** 2).mean())
+            rmse = np.sqrt(((var1 - var2) ** 2).mean())
+            # Workaround for https://github.com/numpy/numpy/issues/5769
+            if type(rmse) is np.ma.MaskedArray:
+                rmse = np.float64(rmse)
         else:
-            return 0.
+            rmse = 0.
+        return rmse
 
             
     

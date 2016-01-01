@@ -114,13 +114,18 @@ class FileDiffs(object):
         """
 
         for (varname, index) in self._file1.get_varlist_bydim(dimname):
-            # For now, assume that we want the same index in file2 as in file1.
-            #
-            # TODO(wjs, 2015-12-31) (optional) allow for different indices,
-            # based on reading the associated coordinate variable and finding
-            # the matching coordinate (e.g., matching time).
-            index_info = VarDiffsIndexInfo.dim_sliced(dimname, index, index)
-            self._add_one_vardiffs(varname, index_info, {dimname:index})
+            if index is None:
+                index_info = VarDiffsIndexInfo.no_slicing()
+                dim_indices = {}
+            else:
+                # For now, assume that we want the same index in file2 as in file1.
+                #
+                # TODO(wjs, 2015-12-31) (optional) allow for different indices,
+                # based on reading the associated coordinate variable and finding
+                # the matching coordinate (e.g., matching time).
+                index_info = VarDiffsIndexInfo.dim_sliced(dimname, index, index)
+                dim_indices = {dimname:index}
+            self._add_one_vardiffs(varname, index_info, dim_indices)
 
     def _add_one_vardiffs(self, varname, index_info, dim_indices={}):
         """Add one vardiffs object to self.
