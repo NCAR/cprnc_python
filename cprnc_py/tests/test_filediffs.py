@@ -219,5 +219,16 @@ class TestFilediffs(CustomAssertions):
         self.assertRegexMatches(mystr, "diff_test.*IDENTICAL")
         self.assertNotRegexMatches(mystr, "diff_test.*DIFFERENT")
 
+    def test_str_separateDim(self):
+        # Just a smoke test of the printing when separate_dim is given
+        file1 = NetcdfFileFake(
+            self.FILENAME1,
+            variables = {'var1': NetcdfVariableFake(np.array([1,2,3]))})
+        file2 = NetcdfFileFake(
+            self.FILENAME2,
+            variables = {'var1': NetcdfVariableFake(np.array([1,2,4]))})
+        mydiffs = FileDiffs(file1, file2, separate_dim='dim1')
+        mystr = str(mydiffs)
+
 if __name__ == '__main__':
     unittest.main()

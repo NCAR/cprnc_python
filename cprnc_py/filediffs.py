@@ -1,5 +1,5 @@
 from __future__ import print_function
-from cprnc_py.vardiffs import (VarDiffsIndexInfo, VarDiffs)
+from cprnc_py.vardiffs import VarDiffs
 
 class FileDiffs(object):
     """This class computes statistics about the differences between two netcdf
@@ -68,17 +68,17 @@ class FileDiffs(object):
         """Return a count of the number of variables with elements that
         differ."""
 
-        return sum([var.vars_differ() for var in self._vardiffs_list])
+        return sum([var.var_diffs.vars_differ() for var in self._vardiffs_list])
 
     def num_masks_differ(self):
         """Return a count of the number of variables with masks that differ."""
 
-        return sum([var.masks_differ() for var in self._vardiffs_list])
+        return sum([var.var_diffs.masks_differ() for var in self._vardiffs_list])
 
     def num_dims_differ(self):
         """Return a count of the number of variables with dims that differ."""
 
-        return sum([var.dims_differ() for var in self._vardiffs_list])
+        return sum([var.var_diffs.dims_differ() for var in self._vardiffs_list])
 
     def files_differ(self):
         """Returns a boolean variable saying whether the two files differ in any
@@ -100,9 +100,9 @@ class FileDiffs(object):
         """
 
         for varname in sorted(self._file1.get_varlist()):
-            index_info = VarDiffsIndexInfo.no_slicing()
-            self._add_one_vardiffs(varname, index_info)
-
+            var_diffs = self._create_vardiffs(varname)
+            diff_wrapper = _DiffWrapper.no_slicing(var_diffs, varname)
+            self._add_one_vardiffs(diff_wrapper)
 
     def _add_vardiffs_separated_by_dim(self, dimname):
         """Add all of the vardiffs to self.
@@ -115,24 +115,25 @@ class FileDiffs(object):
 
         for (varname, index) in self._file1.get_varlist_bydim(dimname):
             if index is None:
-                index_info = VarDiffsIndexInfo.no_slicing()
-                dim_indices = {}
+                var_diffs = self._create_vardiffs(varname)
+                diff_wrapper = _DiffWrapper.no_slicing(var_diffs, varname)
             else:
                 # For now, assume that we want the same index in file2 as in file1.
                 #
                 # TODO(wjs, 2015-12-31) (optional) allow for different indices,
                 # based on reading the associated coordinate variable and finding
                 # the matching coordinate (e.g., matching time).
-                index_info = VarDiffsIndexInfo.dim_sliced(dimname, index, index)
-                dim_indices = {dimname:index}
-            self._add_one_vardiffs(varname, index_info, dim_indices)
+                var_diffs = self._create_vardiffs(varname, {dimname:index})
+                diff_wrapper = _DiffWrapper.dim_sliced(var_diffs, varname,
+                                                       dimname, index, index)
 
-    def _add_one_vardiffs(self, varname, index_info, dim_indices={}):
-        """Add one vardiffs object to self.
+            self._add_one_vardiffs(diff_wrapper)
+
+    def _create_vardiffs(self, varname, dim_indices={}):
+        """Create and return a VarDiffs object.
 
         Arguments:
         varname: variable name
-        index_info: VarDiffsIndexInfo object
         dim_indices: dictionary of (dimname:index) pairs giving dimension index or
             indices to use for slicing the data (should agree with index_info)
         """
@@ -142,8 +143,83 @@ class FileDiffs(object):
         # otherwise, could just let it throw an exception)
 
         # FIXME(wjs, 2015-12-24) Add handling of non-numeric variables
-        my_vardiffs = VarDiffs(varname,
-                               self._file1.get_vardata(varname, dim_indices),
-                               self._file2.get_vardata(varname, dim_indices),
-                               index_info)
-        self._vardiffs_list.append(my_vardiffs)
+
+        my_vardiffs = VarDiffs(
+            varname,
+            self._file1.get_vardata(varname, dim_indices),
+            self._file2.get_vardata(varname, dim_indices))
+
+        return my_vardiffs
+
+    def _add_one_vardiffs(self, diff_wrapper):
+        """Add one _DiffWrapper object to the list."""
+
+        self._vardiffs_list.append(diff_wrapper)
+
+class _DiffWrapper(object):
+    """This class is used by FileDiffs to wrap instances of VarDiffs objects.
+
+    In addition to the VarDiffs objects themselves, this also stores metadata
+    about the given differece (variable name, indices used for slicing).
+
+    Typically, instances should be created using one of:
+    my_vardiffs = _DiffWrapper.no_slicing(var_diffs, varname)
+    my_vardiffs = _DiffWrapper.dim_sliced(var_diffs, varname, separate_dim, index1, index2)
+    """
+
+    def __init__(self, var_diffs, varname, separate_dim, index1, index2):
+        self.var_diffs = var_diffs
+        self.varname = varname
+        self.separate_dim = separate_dim
+        self.index1 = index1
+        self.index2 = index2
+
+    @classmethod
+    def no_slicing(cls, var_diffs, varname):
+        """Returns a _DiffWrapper object that is appropriate when no slicing was
+        done.
+
+        Arguments:
+        var_diffs: VarDiffs object
+        varname: string: name of this variable
+        """
+
+        return cls(var_diffs, varname, separate_dim=None, index1=None, index2=None)
+
+    @classmethod
+    def dim_sliced(cls, var_diffs, varname, separate_dim, index1, index2):
+        """Returns a _DiffWrapper object that is appropriate when slicing was
+        done along one dimension.
+
+        Arguments:
+        var_diffs: VarDiffs object
+        varname: string: name of this variable
+        separate_dim: string: name of dimension that was sliced
+        index1: integer: index used in var1
+        index2: integer: index used in var2
+        """
+
+        return cls(var_diffs, varname, separate_dim, index1, index2)
+
+    def __str__(self):
+        mystr = self.varname + "  "
+        if self.separate_dim is None:
+            pass
+        elif self.index1 is None and self.index2 is None:
+            pass
+        else:
+            if self.index1 is None:
+                index1_str = "   All"
+            else:
+                index1_str = "{:6d}".format(self.index1 + 1)
+            if self.index2 is None:
+                index2_str = "   All"
+            else:
+                index2_str = "{:6d}".format(self.index2 + 1)
+
+            mystr = mystr + "{dimname} index: {index1} {index2}".format(
+                dimname=self.separate_dim, index1=index1_str, index2=index2_str)
+
+        mystr = mystr + "\n"
+        mystr = mystr + str(self.var_diffs)
+        return mystr

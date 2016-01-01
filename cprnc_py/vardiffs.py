@@ -4,60 +4,6 @@ import numpy as np
 import numpy.ma as ma
 from cprnc_py.varinfo import VarInfo
 
-class VarDiffsIndexInfo(object):
-    """This class holds information about the slicing done to create a VarDiffs
-    object: which dimension was sliced, and what the index of this dimension is
-    for var1 and var2.
-
-    Typically, instances should be created using one of:
-
-    myvardiffs = VarDiffsIndexInfo.no_slicing()
-    myvardiffs = VarDiffsIndexInfo.dim_sliced(dimname, index1, index2)
-    """
-
-    def __init__(self, dimname, index1, index2):
-        self._dimname = dimname
-        self._index1 = index1
-        self._index2 = index2
-
-    def __str__(self):
-        if self._dimname is None:
-            return ""
-        elif self._index1 is None and self._index2 is None:
-            return ""
-        else:
-            if self._index1 is None:
-                index1_str = "   All"
-            else:
-                index1_str = "{:6d}".format(self._index1 + 1)
-            if self._index2 is None:
-                index2_str = "   All"
-            else:
-                index2_str = "{:6d}".format(self._index2 + 1)
-
-            return "{dimname} index: {index1} {index2}".format(
-                dimname=self._dimname, index1=index1_str, index2=index2_str)
-
-    @classmethod
-    def no_slicing(cls):
-        """Returns a VarDiffsIndexInfo object that is appropriate when no
-        slicing was done."""
-
-        return cls(dimname=None, index1=None, index2=None)
-
-    @classmethod
-    def dim_sliced(cls, dimname, index1, index2):
-        """Returns a VarDiffsIndexInfo object that is appropriate when slicing
-        was done along one dimension.
-
-        Arguments:
-        dimname: name of dimension that was sliced
-        index1: integer giving the index used in var1
-        index2: integer giving the index used in var2
-        """
-
-        return cls(dimname, index1, index2)
-
 class VarDiffs(object):
     """This class holds a variety of statistics about the differences between
     two variables."""
@@ -66,26 +12,17 @@ class VarDiffs(object):
     # Constructor and other special methods
     # ------------------------------------------------------------------------
 
-    def __init__(self, varname, var1, var2, index_info=None):
+    def __init__(self, varname, var1, var2):
         """Create a VarDiffs object.
 
         Arguments:
         varname: string (just used for printing)
-        index1, index2: integers giving the index of some dimension of interest:
-            var1 and var2 are assumed to be sliced along this dimension (just
-            used for printing) (can be None)
         var1, var2: numpy or numpy.ma arrays
-        index_info: VarDiffsIndexInfo object (if None, uses VarDiffsIndexInfo.no_slicing())
         """
-        
-        self._varname = varname
-        if index_info is None:
-            self._index_info = VarDiffsIndexInfo.no_slicing()
-        else:
-            self._index_info = index_info
 
-        self._var1info = VarInfo(varname, var1)
-        self._var2info = VarInfo(varname, var2)
+        self._varname = varname
+        self._var1info = VarInfo(var1)
+        self._var2info = VarInfo(var2)
 
         # Compute all necessary statistics in initialization, so that we don't
         # have to hold onto the variables in memory for later use (in case the
@@ -93,7 +30,7 @@ class VarDiffs(object):
         self._compute_stats(var1, var2)
 
     def __str__(self):
-        mystr = self._varname + "  " + str(self._index_info) + "\n"
+        mystr = ""
         mystr += str(self._var1info)
         mystr += str(self._var2info)
         if self.vars_differ():

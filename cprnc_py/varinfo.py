@@ -12,14 +12,11 @@ class VarInfo(object):
     # Constructor and other special methods
     # ------------------------------------------------------------------------
 
-    def __init__(self, varname, var):
+    def __init__(self, var):
         """Create a VarInfo object.
 
         Arguments:
-        varname: string
         var: numpy or numpy.ma array"""
-
-        self._varname = varname
 
         # Compute all necessary statistics in initialization, so that we don't
         # have to hold onto the variable in memory for later use (in case the
