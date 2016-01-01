@@ -39,7 +39,7 @@ class NetcdfFile(object):
         dimsize = self.get_dimsize(dimname)
 
         # First yield variables that do not have the given dimension
-        for varname in self.get_varlist():
+        for varname in sorted(self.get_varlist()):
             var = self._get_variable(varname)
             dimnum = var.get_dimnum(dimname)
             if dimnum is None:
@@ -47,7 +47,7 @@ class NetcdfFile(object):
 
         # Now yield variables with the given dimension
         for index in range(dimsize):
-            for varname in self.get_varlist():
+            for varname in sorted(self.get_varlist()):
                 var = self._get_variable(varname)
                 dimnum = var.get_dimnum(dimname)
                 if dimnum is not None:
