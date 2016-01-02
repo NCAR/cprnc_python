@@ -28,15 +28,21 @@ class NetcdfFileScipy(NetcdfFile):
     def get_dimsize(self, dimname):
         """Returns the size of the given dimension.
 
+        If this dimension doesn't exist, returns 0.
+
         If querying the unlimited dimension, and no variables on the file have
         this dimension, returns 0.
         """
 
-        dimsize = self._file.dimensions[dimname]
-        if dimsize is None:
-            # Unlimited dimensions have dimsize None. So find a variable with
-            # this dimension, and look at its size.
-            dimsize = self._get_dimsize_from_variables(dimname)
+        try:
+            dimsize = self._file.dimensions[dimname]
+        except KeyError:
+            dimsize = 0
+        else:
+            if dimsize is None:
+                # Unlimited dimensions have dimsize None. So find a variable with
+                # this dimension, and look at its size.
+                dimsize = self._get_dimsize_from_variables(dimname)
         return dimsize
 
     def _get_variable(self, varname):
