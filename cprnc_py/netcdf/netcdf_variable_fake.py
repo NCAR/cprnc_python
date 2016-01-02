@@ -8,7 +8,7 @@ class NetcdfVariableFake(NetcdfVariable):
     dimensions: list of dimension names
     """
 
-    def __init__(self, data, dimnames=None):
+    def __init__(self, data, dimnames=None, is_numeric=True):
         """Initialize a netcdf_var_fake instance.
 
         Arguments:
@@ -17,6 +17,7 @@ class NetcdfVariableFake(NetcdfVariable):
             Must at least support the shape method
         dimnames: list of strings, with one dimname for each dimension in data
             If None, constructs dimnames as dim1, dim2, etc.
+        is_numeric: whether this variable is numeric
         """
 
         super(NetcdfVariableFake, self).__init__()
@@ -29,6 +30,7 @@ class NetcdfVariableFake(NetcdfVariable):
             if (len(dimnames) != ndims):
                 raise ValueError("Wrong number of dimnames")
             self.dimensions = dimnames
+        self.is_numeric = is_numeric
 
     def get_dimensions(self):
         """Return a list of dimension names"""
@@ -41,6 +43,10 @@ class NetcdfVariableFake(NetcdfVariable):
     def get_attributes(self):
         """Return a dictionary of variable attributes on the file"""
         return {}
+
+    def is_numeric(self):
+        """Return True if this variable is numeric, False otherwise (e.g., for characters)"""
+        return self.is_numeric
 
     def _get_data_from_slices(self, dim_slices):
         """Get this variable's data as a numpy array.
