@@ -6,7 +6,11 @@ from cprnc_py.varinfo import VarInfo
 
 class VarDiffs(object):
     """This class holds a variety of statistics about the differences between
-    two variables."""
+    two variables.
+
+    This is the main version of the VarDiffs class, which is used for numeric
+    variables.
+    """
 
     # ------------------------------------------------------------------------
     # Constructor and other special methods
@@ -37,8 +41,7 @@ class VarDiffs(object):
             mystr += \
               "RMS {varname:<32}{rms:11.4E}".format(varname=self._varname, rms=self._rmse) + \
               " " * 11 + \
-              "NORMALIZED {normalized:11.4E}".format(normalized=self._normalized_rmse) + \
-              "\n\n"
+              "NORMALIZED {normalized:11.4E}".format(normalized=self._normalized_rmse)
             
         return mystr
         
@@ -68,6 +71,11 @@ class VarDiffs(object):
         """Return True if the variables' dimensions differ in shape or size."""
 
         return self._dims_differ
+
+    def could_not_be_analyzed(self):
+        """Return True if the variables could not be analyzed"""
+
+        return False
     
     # ------------------------------------------------------------------------
     # Private methods
@@ -120,5 +128,24 @@ class VarDiffs(object):
             rmse = 0.
         return rmse
 
-            
-    
+class VarDiffsNonNumeric(object):
+    """This version of VarDiffs is used for non-numeric variables."""
+
+    def __init__(self, varname):
+        self._varname = varname
+
+    def __str__(self):
+        mystr = "Non-numeric variable could not be analyzed"
+        return mystr
+
+    def vars_differ(self):
+        return False
+
+    def masks_differ(self):
+        return False
+
+    def dims_differ(self):
+        return False
+
+    def could_not_be_analyzed(self):
+        return True

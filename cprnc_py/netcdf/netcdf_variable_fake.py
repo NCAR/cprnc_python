@@ -30,7 +30,7 @@ class NetcdfVariableFake(NetcdfVariable):
             if (len(dimnames) != ndims):
                 raise ValueError("Wrong number of dimnames")
             self.dimensions = dimnames
-        self.is_numeric = is_numeric
+        self.numeric = is_numeric
 
     def get_dimensions(self):
         """Return a list of dimension names"""
@@ -46,7 +46,7 @@ class NetcdfVariableFake(NetcdfVariable):
 
     def is_numeric(self):
         """Return True if this variable is numeric, False otherwise (e.g., for characters)"""
-        return self.is_numeric
+        return self.numeric
 
     def _get_data_from_slices(self, dim_slices):
         """Get this variable's data as a numpy array.

@@ -1,5 +1,5 @@
 from __future__ import print_function
-from cprnc_py.vardiffs import VarDiffs
+from cprnc_py.vardiffs import (VarDiffs, VarDiffsNonNumeric)
 
 class FileDiffs(object):
     """This class computes statistics about the differences between two netcdf
@@ -34,21 +34,24 @@ class FileDiffs(object):
         # FIXME(wjs, 2015-12-26) Add some header text
 
         for var in self._vardiffs_list:
-            mystr = mystr + str(var)
+            mystr = mystr + str(var) + "\n\n"
 
         mystr = mystr + "*" * 132 + "\n\n"
         mystr = mystr + "SUMMARY of cprnc:\n"
         # FIXME(wjs, 2015-12-26) is it right to include the
-        # could-not-be-analyzed fields in the following count?:
+        # could-not-be-analyzed fields in the 'total number' count? (If not,
+        # consider wording the print of the could not be analyzed number
+        # differently, too):
         mystr = mystr + " A total number of {0:6d} fields were compared\n".format(
-            len(self._vardiffs_list))
+            self.num_vars())
         mystr = mystr + "          of which {0:6d} had non-zero differences\n".format(
             self.num_vars_differ())
         mystr = mystr + "               and {0:6d} had differences in fill patterns\n".format(
             self.num_masks_differ())
         mystr = mystr + "               and {0:6d} had differences in dimension sizes\n".format(
             self.num_dims_differ())
-        # FIXME(wjs, 2015-12-26) Add count of could-not-be-analyzed
+        mystr = mystr + "               and {0:6d} could not be analyzed (e.g., strings)\n".format(
+            self.num_could_not_be_analyzed())
         # FIXME(wjs, 2015-12-26) Add count of fields not found
 
         mystr = mystr + "  diff_test: the two files seem to be "
@@ -63,6 +66,11 @@ class FileDiffs(object):
     # ------------------------------------------------------------------------
     # Public methods
     # ------------------------------------------------------------------------
+
+    def num_vars(self):
+        """Return a count of the total number of variables."""
+
+        return len(self._vardiffs_list)
 
     def num_vars_differ(self):
         """Return a count of the number of variables with elements that
@@ -80,13 +88,25 @@ class FileDiffs(object):
 
         return sum([var.var_diffs.dims_differ() for var in self._vardiffs_list])
 
+    def num_could_not_be_analyzed(self):
+        """Return a count of the number of variables that could not be
+        analyzed."""
+
+        return sum([var.var_diffs.could_not_be_analyzed() for var in self._vardiffs_list])
+
     def files_differ(self):
         """Returns a boolean variable saying whether the two files differ in any
         meaningful way."""
 
-        differ = (self.num_vars_differ() > 0 or
-                  self.num_masks_differ() > 0 or
-                  self.num_dims_differ() > 0)
+        if (self.num_vars_differ() > 0 or
+            self.num_masks_differ() > 0 or
+            self.num_dims_differ() > 0):
+            differ = True
+        elif (self.num_vars() - self.num_could_not_be_analyzed()) == 0:
+            # If no variables could be analyzed, treat this as files differing
+            differ = True
+        else:
+            differ = False
         return differ
 
     # ------------------------------------------------------------------------
@@ -144,10 +164,13 @@ class FileDiffs(object):
 
         # FIXME(wjs, 2015-12-24) Add handling of non-numeric variables
 
-        my_vardiffs = VarDiffs(
-            varname,
-            self._file1.get_vardata(varname, dim_indices),
-            self._file2.get_vardata(varname, dim_indices))
+        if (self._file1.is_var_numeric(varname) and self._file2.is_var_numeric(varname)):
+            my_vardiffs = VarDiffs(
+                varname,
+                self._file1.get_vardata(varname, dim_indices),
+                self._file2.get_vardata(varname, dim_indices))
+        else:
+            my_vardiffs = VarDiffsNonNumeric(varname)
 
         return my_vardiffs
 

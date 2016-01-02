@@ -141,6 +141,25 @@ class TestFilediffs(CustomAssertions):
         self.assertEqual(num_differ, 3)
 
     # ------------------------------------------------------------------------
+    # Tests of num_could_not_be_analyzed
+    # ------------------------------------------------------------------------
+
+    def test_numCouldNotBeAnalyzed_withCharVariable(self):
+        var_numeric = NetcdfVariableFake(np.array([1,2,3]))
+        var_char = NetcdfVariableFake(np.array(['a','b','c']), is_numeric=False)
+        file1 = NetcdfFileFake(
+            self.FILENAME1,
+            variables = {'var1': var_numeric,
+                         'var2': var_char})
+        file2 = NetcdfFileFake(
+            self.FILENAME2,
+            variables = {'var1': var_numeric,
+                         'var2': var_char})
+        mydiffs = FileDiffs(file1, file2, separate_dim=None)
+        num_could_not_be_analyzed = mydiffs.num_could_not_be_analyzed()
+        self.assertEqual(num_could_not_be_analyzed, 1)
+
+    # ------------------------------------------------------------------------
     # Tests of files_differ
     # ------------------------------------------------------------------------
 
@@ -187,6 +206,31 @@ class TestFilediffs(CustomAssertions):
         mydiffs = FileDiffs(file1, file2, separate_dim=None)
         differ = mydiffs.files_differ()
         self.assertTrue(differ)
+
+    def test_filesDiffer_withNoVariables(self):
+        file1 = NetcdfFileFake(
+            self.FILENAME1,
+            variables = {})
+        file2 = NetcdfFileFake(
+            self.FILENAME2,
+            variables = {})
+        mydiffs = FileDiffs(file1, file2)
+        differ = mydiffs.files_differ()
+        self.assertTrue(differ)
+
+    def test_filesDiffer_withNoVarsAnalyzed(self):
+        var_char = NetcdfVariableFake(np.array(['a','b','c']), is_numeric=False)
+        file1 = NetcdfFileFake(
+            self.FILENAME1,
+            variables = {'var1': var_char})
+        file2 = NetcdfFileFake(
+            self.FILENAME2,
+            variables = {'var1': var_char})
+        mydiffs = FileDiffs(file1, file2, separate_dim=None)
+        differ = mydiffs.files_differ()
+        self.assertTrue(differ)
+
+
 
     # ------------------------------------------------------------------------
     # Tests of __str__
