@@ -19,6 +19,7 @@ class TestNetcdfFileScipy(CustomAssertions):
     TEST_DATA_PATH = join(dirname(__file__), 'test_inputs')
     TESTFILE_BASIC = join(TEST_DATA_PATH, 'testfile_basic.nc')
     TESTFILE_MULTIPLE_TIMES = join(TEST_DATA_PATH, 'testfile_multipleTimes_someTimeless.nc')
+    TESTFILE_CHAR = join(TEST_DATA_PATH, 'testfile_char.nc')
 
     def test_getDimsize_withBasicData(self):
         mynetcdf = netcdf(self.TESTFILE_BASIC)
@@ -105,7 +106,17 @@ class TestNetcdfFileScipy(CustomAssertions):
         myatts = mynetcdf.get_global_attributes()
         expected = {'attribute1':b'foo1', 'attribute2':b'foo2', 'attribute3':b'foo3'}
         self.assertEqual(expected, myatts)
-    
+
+    def test_isVarNumeric_withNumericVar(self):
+        mynetcdf = netcdf(self.TESTFILE_BASIC)
+        is_numeric = mynetcdf.is_var_numeric('testvar')
+        self.assertTrue(is_numeric)
+
+    def test_isVarNumeric_withCharacterVar(self):
+        mynetcdf = netcdf(self.TESTFILE_CHAR)
+        is_numeric = mynetcdf.is_var_numeric('mystr')
+        self.assertFalse(is_numeric)
+
 if __name__ == '__main__':
     unittest.main()
         

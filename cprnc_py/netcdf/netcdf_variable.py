@@ -73,6 +73,10 @@ class NetcdfVariable(object):
         """Return a dictionary of variable attributes on the file"""
         raise NotImplementedError
 
+    def is_numeric(self):
+        """Return True if this variable is numeric, False otherwise (e.g., for characters)"""
+        raise NotImplementedError
+
     # ------------------------------------------------------------------------
     # Private methods that should be implemented by subclasses
     # ------------------------------------------------------------------------

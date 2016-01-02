@@ -72,6 +72,13 @@ class NetcdfFile(object):
         var = self._get_variable(varname)
         return var.get_data(dim_indices)
 
+    def is_var_numeric(self, varname):
+        """Returns True if the given variable is numeric, False otherwise (e.g.,
+        if it is a character variable)."""
+
+        var = self._get_variable(varname)
+        return var.is_numeric()
+
     # ------------------------------------------------------------------------
     # Public methods that should be provided by subclasses
     # ------------------------------------------------------------------------

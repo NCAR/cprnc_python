@@ -30,6 +30,15 @@ class NetcdfVariableScipy(NetcdfVariable):
 
         return self._var._attributes
 
+    def is_numeric(self):
+        """Return True if this variable is numeric, False otherwise (e.g., for characters)"""
+
+        mytype = self._var.typecode()
+        if mytype == 'c':
+            return False
+        else:
+            return True
+
     def _get_data_from_slices(self, dim_slices):
         """Get this variable's data as a numpy array.
 
