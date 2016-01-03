@@ -162,8 +162,6 @@ class FileDiffs(object):
         # a has_variable method to the netcdf class to help with this;
         # otherwise, could just let it throw an exception)
 
-        # FIXME(wjs, 2015-12-24) Add handling of non-numeric variables
-
         if (self._file1.is_var_numeric(varname) and self._file2.is_var_numeric(varname)):
             my_vardiffs = VarDiffs(
                 varname,
