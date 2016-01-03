@@ -91,7 +91,8 @@ class VarDiffs(object):
             self._masks_differ = self._compute_masks_differ(var1, var2)
 
         self._rmse = self._compute_rmse(var1, var2)
-        # fixme: change the following
+        # FIXME(wjs, 2016-01-03) The following is just a place-holder - we need
+        # the true calculation of normalized RMSE
         self._normalized_rmse = self._rmse / 2
 
     def _compute_dims_differ(self, var1, var2):
