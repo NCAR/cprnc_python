@@ -3,6 +3,31 @@ class NetcdfFile(object):
 
     This should not be instantiated directly. Instead, instantiate one of its
     subclasses, which provide support for particular python netcdf packages.
+
+    This class serves two purposes:
+
+    (1) Provides a common API through which any python netCDF package can be
+    used; this includes:
+
+    - get_varlist(): Returns a list of variables in the netcdf file
+
+    - get_filename(): Returns the file name corresponding to this netcdf file
+
+    - get_global_attributes(): Returns a dictionary of global attributes
+
+    - get_dimsize(dimname): Returns the size of the given dimension
+
+    (2) Provides some higher-level methods on top of these netCDF packages, such
+    as getting variable data sliced by one or more named dimensions; this
+    includes:
+
+    - get_varlist_by_dim(dimname): Generator that yields a tuple (varname,
+      index), with one return for each index in the given dimname
+
+    - get_vardata(varname, dim_indices): Returns the variable's data, possibly
+      sliced along one or more named dimensions
+
+    - is_var_numeric(varname): Returns True if the given variable is numeric
     """
 
     # ------------------------------------------------------------------------

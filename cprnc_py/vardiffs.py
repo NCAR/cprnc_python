@@ -10,6 +10,20 @@ class VarDiffs(object):
 
     This is the main version of the VarDiffs class, which is used for numeric
     variables.
+
+    Typical usage is:
+
+    (1) Create a VarDiffs object:
+        mydiff = VarDiffs(varname, var1, var2)
+
+    (2a) (Optionally) Print statistics on differences:
+         str(mydiff)
+
+    (2b) (Optionally) Query specific differences:
+         - mydiff.vars_differ()
+         - mydiff.masks_differ()
+         - mydiff.dims_differ()
+         - mydiff.could_not_be_analyzed()
     """
 
     # ------------------------------------------------------------------------
@@ -130,7 +144,10 @@ class VarDiffs(object):
         return rmse
 
 class VarDiffsNonNumeric(object):
-    """This version of VarDiffs is used for non-numeric variables."""
+    """This version of VarDiffs is used for non-numeric variables.
+
+    Usage is the same as for the standard VarDiffs.
+    """
 
     def __init__(self, varname):
         self._varname = varname

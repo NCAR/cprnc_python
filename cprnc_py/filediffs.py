@@ -3,7 +3,28 @@ from cprnc_py.vardiffs import (VarDiffs, VarDiffsNonNumeric)
 
 class FileDiffs(object):
     """This class computes statistics about the differences between two netcdf
-    files."""
+    files. This provides the main, high-level functionality of cprnc. It can be
+    used by the cprnc command-line tool, or directly by other python code.
+
+    Typical usage is:
+
+    (1) Create a FileDiffs object:
+        mydiffs = FileDiffs(file1, file2)
+
+    (2a) (Optionally) Query whether the files differ:
+         mydiffs.files_differ()
+
+    (2b) (Optionally) Query specific differences: e.g., how many variables
+         differ in various ways:
+         - mydiffs.num_vars()
+         - mydiffs.num_vars_differ()
+         - mydiffs.num_masks_differ()
+         - mydiffs.num_dims_differ()
+         - mydiffs.num_could_not_be_analyzed()
+
+    (2c) (Optionally) Print statistics on differences:
+         str(mydiffs)
+    """
 
     # ------------------------------------------------------------------------
     # Constructor and other special methods
@@ -68,28 +89,28 @@ class FileDiffs(object):
     # ------------------------------------------------------------------------
 
     def num_vars(self):
-        """Return a count of the total number of variables."""
+        """Returns a count of the total number of variables."""
 
         return len(self._vardiffs_list)
 
     def num_vars_differ(self):
-        """Return a count of the number of variables with elements that
+        """Returns a count of the number of variables with elements that
         differ."""
 
         return sum([var.var_diffs.vars_differ() for var in self._vardiffs_list])
 
     def num_masks_differ(self):
-        """Return a count of the number of variables with masks that differ."""
+        """Returns a count of the number of variables with masks that differ."""
 
         return sum([var.var_diffs.masks_differ() for var in self._vardiffs_list])
 
     def num_dims_differ(self):
-        """Return a count of the number of variables with dims that differ."""
+        """Returns a count of the number of variables with dims that differ."""
 
         return sum([var.var_diffs.dims_differ() for var in self._vardiffs_list])
 
     def num_could_not_be_analyzed(self):
-        """Return a count of the number of variables that could not be
+        """Returns a count of the number of variables that could not be
         analyzed."""
 
         return sum([var.var_diffs.could_not_be_analyzed() for var in self._vardiffs_list])
@@ -178,7 +199,8 @@ class FileDiffs(object):
         self._vardiffs_list.append(diff_wrapper)
 
 class _DiffWrapper(object):
-    """This class is used by FileDiffs to wrap instances of VarDiffs objects.
+    """This class is used by FileDiffs to wrap instances of VarDiffs objects. It
+    should not be used by outside code.
 
     In addition to the VarDiffs objects themselves, this also stores metadata
     about the given differece (variable name, indices used for slicing).

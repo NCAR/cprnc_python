@@ -1,7 +1,7 @@
 from cprnc_py.netcdf.netcdf_variable import NetcdfVariable
 
 class NetcdfVariableFake(NetcdfVariable):
-    """Fake replacement for a netcdf variable, for the sake of unit testing.
+    """Fake replacement for a NetcdfVariable, for the sake of unit testing.
 
     Attributes are:
     vardata: the data themselves (typically numpy or numpy.ma array)

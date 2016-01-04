@@ -1,7 +1,7 @@
 from cprnc_py.netcdf.netcdf_file import NetcdfFile
 
 class NetcdfFileFake(NetcdfFile):
-    """Fake replacement for a netcdf adapter, for the sake of unit testing.
+    """Fake replacement for a NetcdfFile, for the sake of unit testing.
 
     This version allows unit tests to add whatever data they want before calling
     a method on the system under test."""

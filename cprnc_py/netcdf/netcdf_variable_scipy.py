@@ -16,22 +16,22 @@ class NetcdfVariableScipy(NetcdfVariable):
         self._var = var
 
     def get_dimensions(self):
-        """Return a list of dimension names"""
+        """Returns a list of dimension names"""
 
         return self._var.dimensions
 
     def get_shape(self):
-        """Return a tuple describing the variable's shape"""
+        """Returns a tuple describing the variable's shape"""
 
         return self._var.shape
 
     def get_attributes(self):
-        """Return a dictionary of variable attributes on the file"""
+        """Returns a dictionary of variable attributes on the file"""
 
         return self._var._attributes
 
     def is_numeric(self):
-        """Return True if this variable is numeric, False otherwise (e.g., for characters)"""
+        """Returns True if this variable is numeric, False otherwise (e.g., for characters)"""
 
         mytype = self._var.typecode()
         if mytype == 'c':

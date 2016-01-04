@@ -4,6 +4,29 @@ class NetcdfVariable(object):
 
     This should not be instantiated directly. Instead. instantiate one of its
     subclasses, which provide support for particular python netcdf packages.
+
+    This class serves two purposes:
+
+    (1) Provides a common API through which any python netCDF package can be
+    used; this includes:
+
+    - get_dimensions(): Returns a list of dimension names
+
+    - get_shape(): Returns a tuple describing the variable's shape
+
+    - get_attributes(): Returns a dictionary of variable attributes on the file
+
+    - is_numeric(): Returns True if this variable is numeric
+
+    (2) Provides some higher-level methods on top of these netCDF packages, such
+    as getting variable data sliced by one or more named dimensions; this
+    includes:
+
+    - get_dimnum(dimname): Get the dimension number of the given dimension in
+      this variable
+
+    - get_data(dim_indices): Returns the variable's data, possibly sliced along
+      one or more named dimensions
     """
 
     # ------------------------------------------------------------------------
@@ -62,19 +85,19 @@ class NetcdfVariable(object):
     # ------------------------------------------------------------------------
 
     def get_dimensions(self):
-        """Return a list of dimension names"""
+        """Returns a list of dimension names"""
         raise NotImplementedError
 
     def get_shape(self):
-        """Return a tuple describing the variable's shape"""
+        """Returns a tuple describing the variable's shape"""
         raise NotImplementedError
 
     def get_attributes(self):
-        """Return a dictionary of variable attributes on the file"""
+        """Returns a dictionary of variable attributes on the file"""
         raise NotImplementedError
 
     def is_numeric(self):
-        """Return True if this variable is numeric, False otherwise (e.g., for characters)"""
+        """Returns True if this variable is numeric, False otherwise (e.g., for characters)"""
         raise NotImplementedError
 
     # ------------------------------------------------------------------------

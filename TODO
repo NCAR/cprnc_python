@@ -54,6 +54,8 @@ Nice to have
 Optional
 --------
 
+- Convert some usage info in docstrings to doctest format
+
 - When variables are separated along some dimension (e.g., time), find matching
   indices by examining the coordinate variables (as is done for the fortran
   version)
@@ -61,3 +63,6 @@ Optional
 - Single-file analysis. I envision having a separate wrapper script for this,
   which wraps VarInfo (rather than trying to incorporate this into the same
   script, as is done for the Fortran - this makes the code hard to follow).
+
+- Allow for alternative netCDF packages (e.g., the netCDF4 python package)
+  - See if an alternative package would improve performance considerably

@@ -6,7 +6,16 @@ from cprnc_py.print_utils import index_str
 
 class VarInfo(object):
     """This class computes and prints a variety of statistics about a single
-    variable."""
+    variable.
+
+    Typical usage is:
+
+    (1) Create a VarInfo object:
+        myinfo = VarInfo(var)
+
+    (2) Print statistics:
+        str(myinfo)
+    """
 
     # ------------------------------------------------------------------------
     # Constructor and other special methods

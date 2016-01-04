@@ -3,6 +3,9 @@ without needing to change any client code.
 
 Typical usage:
 from cprnc_py.netcdf.netcdf_wrapper import netcdf
+
+This 'netcdf' symbol is then a subclass of NetcdfFile (defined in
+netcdf_file.py) (client code should not care *which* subclass it is).
 """
 
 from cprnc_py.netcdf.netcdf_file_scipy import NetcdfFileScipy as netcdf

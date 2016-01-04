@@ -14,7 +14,7 @@ Design notes
 
   This is more complex than just computing statistics as we need them (e.g., by
   the __str__ method). However, the current design allows the variable's data to
-  be garbage collected after the computations are done. This, in turn, allows
-  the separation of computation from printing of results, which could lend
-  itself better to parallelization of the computations.
-  
+  be garbage collected after the computations are done, saving memory. In
+  addition, this allows for the separation of computation from printing of
+  results, which could lend itself better to parallelization of the computations
+  (parallelize the computations, but serialize the prints at the end).

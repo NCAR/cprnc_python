@@ -1,0 +1,33 @@
+This directory provides wrappers for netcdf packages. These could be used more
+generally (outside of cprnc), although currently the API only provides the
+functionality needed by cprnc. This includes quite a bit of read functionality,
+but no write functionality.
+
+Outside code should import netcdf_wrapper - in particular, this would work well:
+from cprnc_py.netcdf.netcdf_wrapper import netcdf
+
+This 'netcdf' symbol is then a subclass of NetcdfFile (defined in
+netcdf_file.py) (client code should not care *which* subclass it is).
+
+The NetcdfFile class (in netcdf_file.py) serves two purposes:
+
+(1) Provides a common API through which any python netCDF package can be used
+
+(2) Provides some higher-level methods on top of these netCDF packages
+
+This class should then be subclassed by classes specific to a given python
+netCDF package (e.g., scipy.io.netcdf, netCDF4, etc.). As can be seen from
+netcdf_file_scipy.py, these subclasses are often relatively simple.
+
+The NetcdfVariable class (in netcdf_variable.py) serves a similar role for a
+single variable in a netCDF file. Again, this should be subclassed by classes
+specific to a given python netCDF package. Currently, this is not used directly
+by cprnc (and is not provided by netcdf_wrapper) - rather, cprnc uses a
+NetcdfFile, which provides access to anything needed from a NetcdfVariable
+(e.g., NetcdfFile.get_vardata(varname, dimindices) provides the functionality of
+NetcdfVariable.get_data(dim_indices)).
+
+Fake versions of NetcdfFile and NetcdfVariable are provided to support unit
+testing. These allow a unit test to create a fake, in-memory NetcdfFile,
+containing whatever data it wants; this fake "file" can then be used by the
+system under test.
