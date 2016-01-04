@@ -1,0 +1,63 @@
+Essential
+---------
+
+- Handle fields present on file1 but absent from file2
+  - First add a test of this to the fortran cprnc to make sure our handling
+    matches the fortran's handling; test a multi-time variable to see how this
+    is handled when there are multiple time slices
+
+- Check if scalar variables are handled correctly; if not, handle them
+  specially, either by:
+  - Fixing existing VarDiffs / VarInfo to handle scalar variables
+  - Or making a separate VarDiffs class for scalar variables
+
+- Fix normalized RMS error
+
+- Compute and print other statistics, as is done for cprnc
+
+- Print header information for each variable that matches fortran: include
+  dimension names
+
+- Print header information for the file comparisons, to match fortran
+  - files being compared
+  - fields present on one file but not the other
+  - global attributes? (not essential)
+  - dimension sizes? (not essential)
+  - anything else?
+
+- Look through Fortran for anything else that may be missing
+
+- Run the Fortran cprnc test suite on the python version; compare output with
+  the Fortran. We don't expect identical output, so this will require some
+  hand-comparisons
+  - First, patch the Fortran code so that its output more closely matches the
+    python. The biggest change needed is a clean separation of the
+    single-variable info from the variable diff stats.
+
+
+
+Nice to have
+------------
+
+- Parallelize analysis loop, if this improves performance
+
+- Improve performance in other ways?
+
+- Add one or more "system" tests
+  - Much of what I was testing before with "system" tests of the Fortran
+    (through the run_tests script) is now tested via unit tests. But it would be
+    good to have one or a few system test(s), to at least make sure the whole
+    thing runs. Maybe make these automated tests that just check the final
+    "diff_test" line?
+
+
+Optional
+--------
+
+- When variables are separated along some dimension (e.g., time), find matching
+  indices by examining the coordinate variables (as is done for the fortran
+  version)
+
+- Single-file analysis. I envision having a separate wrapper script for this,
+  which wraps VarInfo (rather than trying to incorporate this into the same
+  script, as is done for the Fortran - this makes the code hard to follow).
