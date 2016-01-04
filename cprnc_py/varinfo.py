@@ -52,18 +52,19 @@ class VarInfo(object):
         Arguments:
         var: numpy.ma array"""
 
+        # For performance reasons, it's better to use varc rather than var for
+        # any operation that doesn't need to reference the array size or indices
+        varc = var.compressed()
+
         self._shape = var.shape
         self._num_elements = var.size
-        self._num_valid = var.count()
+        self._num_valid = varc.size
         if (self._num_valid > 0):
-            self._max_val = var.max()
+            self._max_val = varc.max()
             self._max_loc = var.argmax()
-            self._min_val = var.min()
+            self._min_val = varc.min()
             self._min_loc = var.argmin()
-            self._mean_absval = (ma.fabs(var)).mean()
-            # Workaround for https://github.com/numpy/numpy/issues/5769
-            if (type(self._mean_absval) is np.ma.MaskedArray):
-                self._mean_absval = np.float64(self._mean_absval)
+            self._mean_absval = (np.fabs(varc)).mean()
         else:
             self._max_val = 0
             self._max_loc = 0
