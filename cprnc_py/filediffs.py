@@ -141,9 +141,7 @@ class FileDiffs(object):
         """
 
         for varname in sorted(self._file1.get_varlist()):
-            var_diffs = self._create_vardiffs(varname)
-            diff_wrapper = _DiffWrapper.no_slicing(var_diffs, varname)
-            self._add_one_vardiffs(diff_wrapper)
+            self._add_one_vardiffs((varname, None))
 
     def _add_vardiffs_separated_by_dim(self, dimname):
         """Add all of the vardiffs to self.
@@ -155,20 +153,32 @@ class FileDiffs(object):
         """
 
         for (varname, index) in self._file1.get_varlist_bydim(dimname):
-            if index is None:
-                var_diffs = self._create_vardiffs(varname)
-                diff_wrapper = _DiffWrapper.no_slicing(var_diffs, varname)
-            else:
-                # For now, assume that we want the same index in file2 as in file1.
-                #
-                # TODO(wjs, 2015-12-31) (optional) allow for different indices,
-                # based on reading the associated coordinate variable and finding
-                # the matching coordinate (e.g., matching time).
-                var_diffs = self._create_vardiffs(varname, {dimname:index})
-                diff_wrapper = _DiffWrapper.dim_sliced(var_diffs, varname,
-                                                       dimname, index, index)
+            self._add_one_vardiffs((varname, index), dimname)
 
-            self._add_one_vardiffs(diff_wrapper)
+    def _add_one_vardiffs(self, varname_index, dimname=None):
+        """Add one _DiffWrapper object to the list.
+
+        Arguments:
+        varname_index: tuple (varname, index)
+        dimname: dimension name (or None)
+        """
+
+        (varname, index) = varname_index
+
+        if index is None:
+            var_diffs = self._create_vardiffs(varname)
+            diff_wrapper = _DiffWrapper.no_slicing(var_diffs, varname)
+        else:
+            # For now, assume that we want the same index in file2 as in file1.
+            #
+            # TODO(wjs, 2015-12-31) (optional) allow for different indices,
+            # based on reading the associated coordinate variable and finding
+            # the matching coordinate (e.g., matching time).
+            var_diffs = self._create_vardiffs(varname, {dimname:index})
+            diff_wrapper = _DiffWrapper.dim_sliced(var_diffs, varname,
+                                                   dimname, index, index)
+
+        self._vardiffs_list.append(diff_wrapper)
 
     def _create_vardiffs(self, varname, dim_indices={}):
         """Create and return a VarDiffs object.
@@ -192,11 +202,6 @@ class FileDiffs(object):
             my_vardiffs = VarDiffsNonNumeric(varname)
 
         return my_vardiffs
-
-    def _add_one_vardiffs(self, diff_wrapper):
-        """Add one _DiffWrapper object to the list."""
-
-        self._vardiffs_list.append(diff_wrapper)
 
 class _DiffWrapper(object):
     """This class is used by FileDiffs to wrap instances of VarDiffs objects. It
