@@ -140,7 +140,7 @@ class FileDiffs(object):
         """
 
         self._vardiffs_list = \
-          [self._add_one_vardiffs((varname, None), None) for \
+          [self._create_vardiffs_wrapper_nodim(varname) for \
            varname in sorted(self._file1.get_varlist())]
 
     def _add_vardiffs_separated_by_dim(self, dimname):
@@ -153,11 +153,16 @@ class FileDiffs(object):
         """
 
         self._vardiffs_list = \
-          [self._add_one_vardiffs(varname_index, dimname) for \
+          [self._create_vardiffs_wrapper(varname_index, dimname) for \
            varname_index in self._file1.get_varlist_bydim(dimname)]
 
-    def _add_one_vardiffs(self, varname_index, dimname=None):
-        """Add one _DiffWrapper object to the list.
+
+    def _create_vardiffs_wrapper_nodim(self, varname):
+        """Create one DiffWrapper object, with no separation by dimension."""
+        return self._create_vardiffs_wrapper((varname, None))
+
+    def _create_vardiffs_wrapper(self, varname_index, dimname=None):
+        """Create one DiffWrapper object.
 
         Arguments:
         varname_index: tuple (varname, index)
