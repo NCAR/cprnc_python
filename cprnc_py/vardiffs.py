@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import numpy as np
 import numpy.ma as ma
+from cprnc_py.numpy_utils import compress_two_arrays
 from cprnc_py.varinfo import VarInfo
 
 class VarDiffs(object):
@@ -100,14 +101,22 @@ class VarDiffs(object):
         if (self.dims_differ()):
             self._vars_differ = False
             self._masks_differ = False
+            self._rmse = 0.
+            self._normalized_rmse = 0.
         else:
-            self._vars_differ = self._compute_vars_differ(var1, var2)
             self._masks_differ = self._compute_masks_differ(var1, var2)
 
-        self._rmse = self._compute_rmse(var1, var2)
-        # FIXME(wjs, 2016-01-03) The following is just a place-holder - we need
-        # the true calculation of normalized RMSE
-        self._normalized_rmse = self._rmse / 2
+            # For performance reasons, create compressed versions of var1 and var2
+            (var1c, var2c) = compress_two_arrays(var1, var2)
+
+            # FIXME(wjs, 2016-01-04) Change the following to use pre-computed
+            # abs diff?: check if any abs diff is > 0:
+            self._vars_differ = not np.array_equal(var1c, var2c)
+
+            self._rmse = self._compute_rmse(var1c, var2c)
+            # FIXME(wjs, 2016-01-03) The following is just a place-holder - we need
+            # the true calculation of normalized RMSE
+            self._normalized_rmse = self._rmse / 2
 
     def _compute_dims_differ(self, var1, var2):
         if (var1.shape == var2.shape):
@@ -115,12 +124,6 @@ class VarDiffs(object):
         else:
             return True
     
-    def _compute_vars_differ(self, var1, var2):
-        if (ma.allequal(var1, var2)):
-            return False
-        else:
-            return True
-
     def _compute_masks_differ(self, var1, var2):
         if (np.array_equal(
             ma.getmaskarray(var1),
@@ -136,9 +139,6 @@ class VarDiffs(object):
 
         if (self.vars_differ()):
             rmse = np.sqrt(((var1 - var2) ** 2).mean())
-            # Workaround for https://github.com/numpy/numpy/issues/5769
-            if type(rmse) is np.ma.MaskedArray:
-                rmse = np.float64(rmse)
         else:
             rmse = 0.
         return rmse
