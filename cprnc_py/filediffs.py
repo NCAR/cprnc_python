@@ -32,7 +32,7 @@ class FileDiffs(object):
     # Constructor and other special methods
     # ------------------------------------------------------------------------
 
-    def __init__(self, file1, file2, separate_dim="time", nprocs=1):
+    def __init__(self, file1, file2, mp_pool, separate_dim="time"):
         """Create a FileDiffs object.
 
         Arguments:
@@ -41,6 +41,7 @@ class FileDiffs(object):
         separate_dim: name of dimension to separate along
             If not None or "", then for variables containing the given dimension,
             analysis is done separately for each slice along this dimension
+        mp_pool: multiprocessing.Pool object or similar
         """
 
         # TODO(wjs, 2016-01-05) This use of globals is bad. It's done for the
@@ -50,7 +51,7 @@ class FileDiffs(object):
         _file1 = file1
         _file2 = file2
 
-        self._nprocs = nprocs
+        self._mp_pool = mp_pool
 
         if separate_dim:
             self._add_vardiffs_separated_by_dim(separate_dim)
@@ -147,9 +148,8 @@ class FileDiffs(object):
         Assumes that globals _file1 and _file2 have already been set.
         """
 
-        pool = multiprocessing.Pool(self._nprocs)
         self._vardiffs_list = \
-          list(pool.map(_create_vardiffs_wrapper_nodim, sorted(_file1.get_varlist())))
+          list(self._mp_pool.map(_create_vardiffs_wrapper_nodim, sorted(_file1.get_varlist())))
 
     def _add_vardiffs_separated_by_dim(self, dimname):
         """Add all of the vardiffs to self.
@@ -161,9 +161,8 @@ class FileDiffs(object):
         """
 
         myfunc = partial(_create_vardiffs_wrapper, dimname=dimname)
-        pool = multiprocessing.Pool(self._nprocs)
         self._vardiffs_list = \
-          list(pool.map(myfunc, _file1.get_varlist_bydim(dimname)))
+          list(self._mp_pool.map(myfunc, _file1.get_varlist_bydim(dimname)))
 
 # ------------------------------------------------------------------------
 # The following are defined outside the class so that they can be more
