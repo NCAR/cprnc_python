@@ -140,8 +140,8 @@ class FileDiffs(object):
         """
 
         self._vardiffs_list = \
-          [self._create_vardiffs_wrapper_nodim(varname) for \
-           varname in sorted(self._file1.get_varlist())]
+          list(map(self._create_vardiffs_wrapper_nodim,
+              sorted(self._file1.get_varlist())))
 
     def _add_vardiffs_separated_by_dim(self, dimname):
         """Add all of the vardiffs to self.
