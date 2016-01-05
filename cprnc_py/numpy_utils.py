@@ -21,13 +21,17 @@ def compress_two_arrays(arr1, arr2):
 
     mask1 = np.ma.getmask(arr1)
     mask2 = np.ma.getmask(arr2)
-    points_to_use = ~np.ma.mask_or(mask1, mask2).ravel()
-    if (np.all(points_to_use)):
-        # This special case is partly to handle the case where points_to_use is
-        # a scalar True value, in which case 'compress' doesn't work
-        arr1_compressed = arr1.ravel()
-        arr2_compressed = arr2.ravel()
-    else:
-        arr1_compressed = arr1.compress(points_to_use)
-        arr2_compressed = arr2.compress(points_to_use)
+    mask_union = np.ma.mask_or(mask1, mask2)
+
+    # TODO(wjs, 2016-01-05) It might be possible to increase the efficiency of
+    # the following code slightly by using arr1.compress and arr2.compress on
+    # the complement of mask_union, rather than creating two new np.ma
+    # arrays. However, then we need to be sure to convert the result back into a
+    # numpy array (rather than a numpy.ma array, if it is one). See code in
+    # revision 01edb9df04331ef05c7d803907ae4226083b2f49 and prior (but that
+    # failed to do the conversion from a numpy.ma array to a numpy array).
+    arr1_new = np.ma.masked_where(mask_union, arr1)
+    arr2_new = np.ma.masked_where(mask_union, arr2)
+    arr1_compressed = arr1_new.compressed()
+    arr2_compressed = arr2_new.compressed()
     return (arr1_compressed, arr2_compressed)
