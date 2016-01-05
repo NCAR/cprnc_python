@@ -1,4 +1,5 @@
 from __future__ import print_function
+from functools import partial
 from cprnc_py.vardiffs import (VarDiffs, VarDiffsNonNumeric)
 
 class FileDiffs(object):
@@ -152,10 +153,9 @@ class FileDiffs(object):
         Assumes that self._file1 and self._file2 have already been set.
         """
 
+        myfunc = partial(self._create_vardiffs_wrapper, dimname=dimname)
         self._vardiffs_list = \
-          [self._create_vardiffs_wrapper(varname_index, dimname) for \
-           varname_index in self._file1.get_varlist_bydim(dimname)]
-
+          list(map(myfunc, self._file1.get_varlist_bydim(dimname)))
 
     def _create_vardiffs_wrapper_nodim(self, varname):
         """Create one DiffWrapper object, with no separation by dimension."""
