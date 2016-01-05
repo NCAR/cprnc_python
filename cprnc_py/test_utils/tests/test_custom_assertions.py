@@ -13,6 +13,11 @@ class TestCustomAssertions(CustomAssertions):
         self.assertArraysEqual(x,y)
         # Test passes if assertion passes
 
+    def test_ArraysEqual_withDifferentShapes(self):
+        x = np.array([1,2,3])
+        y = np.array([1,2])
+        self.assertRaises(AssertionError, self.assertArraysEqual, x, y)
+
     def test_ArraysEqual_withDifferentArrays(self):
         x = np.array([1., 2., 3.])
         y = np.array([1., 2., 4.])

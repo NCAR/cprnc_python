@@ -15,6 +15,11 @@ class CustomAssertions(unittest.TestCase):
         Ensure that two numpy / numpy.ma arrays are equivalent in both their
         mask and their data.
         """
+        if (arr1.shape != arr2.shape):
+            msg = "Shapes differ:\n" + \
+              str(arr1.shape) + " != " + str(arr2.shape)
+            raise AssertionError(msg)
+
         mask1 = ma.getmaskarray(arr1)
         mask2 = ma.getmaskarray(arr2)
         masks_equal = np.array_equal(mask1, mask2)
