@@ -140,9 +140,10 @@ class FileDiffs(object):
         Assumes that self._file1 and self._file2 have already been set.
         """
 
+        myfunc = partial(_create_vardiffs_wrapper_nodim, file1=self._file1,
+                         file2=self._file2)
         self._vardiffs_list = \
-          list(map(self._create_vardiffs_wrapper_nodim,
-              sorted(self._file1.get_varlist())))
+          list(map(myfunc, sorted(self._file1.get_varlist())))
 
     def _add_vardiffs_separated_by_dim(self, dimname):
         """Add all of the vardiffs to self.
@@ -153,61 +154,78 @@ class FileDiffs(object):
         Assumes that self._file1 and self._file2 have already been set.
         """
 
-        myfunc = partial(self._create_vardiffs_wrapper, dimname=dimname)
+        myfunc = partial(_create_vardiffs_wrapper, file1=self._file1,
+                         file2=self._file2, dimname=dimname)
         self._vardiffs_list = \
           list(map(myfunc, self._file1.get_varlist_bydim(dimname)))
 
-    def _create_vardiffs_wrapper_nodim(self, varname):
-        """Create one DiffWrapper object, with no separation by dimension."""
-        return self._create_vardiffs_wrapper((varname, None))
+# ------------------------------------------------------------------------
+# The following are defined outside the class so that they can be more
+# easily 'pickled' for the sake of parallelization
+# ------------------------------------------------------------------------
 
-    def _create_vardiffs_wrapper(self, varname_index, dimname=None):
-        """Create one DiffWrapper object.
+def _create_vardiffs_wrapper_nodim(varname, file1, file2):
+    """Create one DiffWrapper object, with no separation by dimension.
 
-        Arguments:
-        varname_index: tuple (varname, index)
-        dimname: dimension name (or None)
-        """
+    Arguments:
+    file1, file2: NetcdfFile
+    varname: string
+    """
 
-        (varname, index) = varname_index
+    return _create_vardiffs_wrapper((varname, None), file1, file2)
 
-        if index is None:
-            var_diffs = self._create_vardiffs(varname)
-            diff_wrapper = _DiffWrapper.no_slicing(var_diffs, varname)
-        else:
-            # For now, assume that we want the same index in file2 as in file1.
-            #
-            # TODO(wjs, 2015-12-31) (optional) allow for different indices,
-            # based on reading the associated coordinate variable and finding
-            # the matching coordinate (e.g., matching time).
-            var_diffs = self._create_vardiffs(varname, {dimname:index})
-            diff_wrapper = _DiffWrapper.dim_sliced(var_diffs, varname,
-                                                   dimname, index, index)
 
-        return diff_wrapper
+def _create_vardiffs_wrapper(varname_index, file1, file2, dimname=None):
+    """Create one DiffWrapper object.
 
-    def _create_vardiffs(self, varname, dim_indices={}):
-        """Create and return a VarDiffs object.
+    Arguments:
+    file1, file2: NetcdfFile
+    varname_index: tuple (varname, index)
+    dimname: dimension name (or None)
+    """
 
-        Arguments:
-        varname: variable name
-        dim_indices: dictionary of (dimname:index) pairs giving dimension index or
-            indices to use for slicing the data (should agree with index_info)
-        """
+    (varname, index) = varname_index
 
-        # FIXME(wjs, 2015-12-24) Add handling of var not in file2 (maybe add
-        # a has_variable method to the netcdf class to help with this;
-        # otherwise, could just let it throw an exception)
+    if index is None:
+        var_diffs = _create_vardiffs(file1, file2, varname)
+        diff_wrapper = _DiffWrapper.no_slicing(var_diffs, varname)
+    else:
+        # For now, assume that we want the same index in file2 as in file1.
+        #
+        # TODO(wjs, 2015-12-31) (optional) allow for different indices,
+        # based on reading the associated coordinate variable and finding
+        # the matching coordinate (e.g., matching time).
+        var_diffs = _create_vardiffs(file1, file2, varname, {dimname:index})
+        diff_wrapper = _DiffWrapper.dim_sliced(var_diffs, varname,
+                                               dimname, index, index)
 
-        if (self._file1.is_var_numeric(varname) and self._file2.is_var_numeric(varname)):
-            my_vardiffs = VarDiffs(
-                varname,
-                self._file1.get_vardata(varname, dim_indices),
-                self._file2.get_vardata(varname, dim_indices))
-        else:
-            my_vardiffs = VarDiffsNonNumeric(varname)
+    return diff_wrapper
 
-        return my_vardiffs
+
+def _create_vardiffs(file1, file2, varname, dim_indices={}):
+    """Create and return a VarDiffs object.
+
+    Arguments:
+    file1, file2: NetcdfFile
+    varname: variable name
+    dim_indices: dictionary of (dimname:index) pairs giving dimension index or
+        indices to use for slicing the data (should agree with index_info)
+    """
+
+    # FIXME(wjs, 2015-12-24) Add handling of var not in file2 (maybe add
+    # a has_variable method to the netcdf class to help with this;
+    # otherwise, could just let it throw an exception)
+
+    if (file1.is_var_numeric(varname) and file2.is_var_numeric(varname)):
+        my_vardiffs = VarDiffs(
+            varname,
+            file1.get_vardata(varname, dim_indices),
+            file2.get_vardata(varname, dim_indices))
+    else:
+        my_vardiffs = VarDiffsNonNumeric(varname)
+
+    return my_vardiffs
+
 
 class _DiffWrapper(object):
     """This class is used by FileDiffs to wrap instances of VarDiffs objects. It
