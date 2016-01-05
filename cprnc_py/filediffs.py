@@ -44,7 +44,6 @@ class FileDiffs(object):
         self._file1 = file1
         self._file2 = file2
 
-        self._vardiffs_list = []
         if separate_dim:
             self._add_vardiffs_separated_by_dim(separate_dim)
         else:
@@ -140,8 +139,9 @@ class FileDiffs(object):
         Assumes that self._file1 and self._file2 have already been set.
         """
 
-        for varname in sorted(self._file1.get_varlist()):
-            self._add_one_vardiffs((varname, None))
+        self._vardiffs_list = \
+          [self._add_one_vardiffs((varname, None), None) for \
+           varname in sorted(self._file1.get_varlist())]
 
     def _add_vardiffs_separated_by_dim(self, dimname):
         """Add all of the vardiffs to self.
@@ -152,8 +152,9 @@ class FileDiffs(object):
         Assumes that self._file1 and self._file2 have already been set.
         """
 
-        for (varname, index) in self._file1.get_varlist_bydim(dimname):
-            self._add_one_vardiffs((varname, index), dimname)
+        self._vardiffs_list = \
+          [self._add_one_vardiffs(varname_index, dimname) for \
+           varname_index in self._file1.get_varlist_bydim(dimname)]
 
     def _add_one_vardiffs(self, varname_index, dimname=None):
         """Add one _DiffWrapper object to the list.
@@ -178,7 +179,7 @@ class FileDiffs(object):
             diff_wrapper = _DiffWrapper.dim_sliced(var_diffs, varname,
                                                    dimname, index, index)
 
-        self._vardiffs_list.append(diff_wrapper)
+        return diff_wrapper
 
     def _create_vardiffs(self, varname, dim_indices={}):
         """Create and return a VarDiffs object.
