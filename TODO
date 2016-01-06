@@ -46,8 +46,6 @@ Essential
 Nice to have
 ------------
 
-- Parallelize analysis loop, if this improves performance
-
 - Improve performance in other ways?
 
 - Add one or more "system" tests
