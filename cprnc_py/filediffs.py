@@ -1,6 +1,7 @@
 from __future__ import print_function
 from functools import partial
-import multiprocessing
+from multiprocessing import Pool
+from cprnc_py.multiprocessing_fake import PoolFake
 from cprnc_py.vardiffs import (VarDiffs, VarDiffsNonNumeric)
 
 class FileDiffs(object):
@@ -32,7 +33,7 @@ class FileDiffs(object):
     # Constructor and other special methods
     # ------------------------------------------------------------------------
 
-    def __init__(self, file1, file2, separate_dim="time", nprocs=1):
+    def __init__(self, file1, file2, separate_dim="time", nprocs=None):
         """Create a FileDiffs object.
 
         Arguments:
@@ -41,6 +42,13 @@ class FileDiffs(object):
         separate_dim: name of dimension to separate along
             If not None or "", then for variables containing the given dimension,
             analysis is done separately for each slice along this dimension
+        nprocs: Number of tasks to use for the creation of the VarDiffs objects
+            nprocs = None (the default) means to use a single task, bypassing the
+            multiprocessing package.
+            nprocs = 1 menas to use a single task via the multiprocessing
+            package (this adds some overhead, and is just intended for testing)
+            nprocs > 1 means to use multiple tasks with the multiprocessing
+            package
         """
 
         # TODO(wjs, 2016-01-05) This use of globals is bad. It's done for the
@@ -147,7 +155,7 @@ class FileDiffs(object):
         Assumes that globals _file1 and _file2 have already been set.
         """
 
-        pool = multiprocessing.Pool(self._nprocs)
+        pool = self._create_pool()
         self._vardiffs_list = \
           list(pool.map(_create_vardiffs_wrapper_nodim, sorted(_file1.get_varlist())))
 
@@ -161,9 +169,18 @@ class FileDiffs(object):
         """
 
         myfunc = partial(_create_vardiffs_wrapper, dimname=dimname)
-        pool = multiprocessing.Pool(self._nprocs)
+        pool = self._create_pool()
         self._vardiffs_list = \
           list(pool.map(myfunc, _file1.get_varlist_bydim(dimname)))
+
+    def _create_pool(self):
+        """Return a multiprocessing Pool object that can be used for
+        parallelization"""
+
+        if (self._nprocs):
+            return Pool(self._nprocs)
+        else:
+            return PoolFake()
 
 # ------------------------------------------------------------------------
 # The following are defined outside the class so that they can be more
