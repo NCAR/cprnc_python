@@ -7,7 +7,7 @@
 def index_str(indices):
     """Convert a list of indices into a pretty string for printing."""
 
-    if (len(indices) == 0):
+    if (type(indices) == int or len(indices) == 0):
         return ""
     else:
         return "(" + ",".join([_format_index(index) for index in indices]) + ")"

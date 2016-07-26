@@ -65,6 +65,7 @@ def commandline_options():
                         help='extra debugging output (currently unused)')
 
     options = parser.parse_args()
+    print(options)
     return options
 
 

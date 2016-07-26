@@ -18,11 +18,10 @@ def compress_two_arrays(arr1, arr2):
 
     Returns a tuple, (arr1_compressed, arr2_compressed).
     """
-
+    
     mask1 = np.ma.getmask(arr1)
     mask2 = np.ma.getmask(arr2)
     mask_union = np.ma.mask_or(mask1, mask2)
-
     # TODO(wjs, 2016-01-05) It might be possible to increase the efficiency of
     # the following code slightly by using arr1.compress and arr2.compress on
     # the complement of mask_union, rather than creating two new np.ma

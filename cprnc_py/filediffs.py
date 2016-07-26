@@ -189,7 +189,6 @@ class FileDiffs(object):
 
 def _create_vardiffs_wrapper_nodim(varname):
     """Create one DiffWrapper object, with no separation by dimension.
-
     Arguments:
     varname: string
     """
@@ -290,7 +289,6 @@ class _DiffWrapper(object):
         index1: integer: index used in var1
         index2: integer: index used in var2
         """
-
         return cls(var_diffs, varname, separate_dim, index1, index2)
 
     def __str__(self):
