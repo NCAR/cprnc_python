@@ -77,7 +77,6 @@ class NetcdfVariable(object):
             else:
                 this_slice = slice(None)
             dim_slices.append(this_slice)
-
         return self._get_data_from_slices(dim_slices)
 
     # ------------------------------------------------------------------------

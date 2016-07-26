@@ -184,10 +184,9 @@ class FileDiffs(object):
         # otherwise, could just let it throw an exception)
 
         if (self._file1.is_var_numeric(varname) and self._file2.is_var_numeric(varname)):
-            my_vardiffs = VarDiffs(
-                varname,
-                self._file1.get_vardata(varname, dim_indices),
-                self._file2.get_vardata(varname, dim_indices))
+            f1vdata = self._file1.get_vardata(varname, dim_indices)
+            f2vdata = self._file2.get_vardata(varname, dim_indices)
+            my_vardiffs = VarDiffs(varname, f1vdata, f2vdata)
         else:
             my_vardiffs = VarDiffsNonNumeric(varname)
 
@@ -241,7 +240,6 @@ class _DiffWrapper(object):
         index1: integer: index used in var1
         index2: integer: index used in var2
         """
-
         return cls(var_diffs, varname, separate_dim, index1, index2)
 
     def __str__(self):

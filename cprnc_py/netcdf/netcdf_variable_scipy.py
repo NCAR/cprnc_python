@@ -1,5 +1,6 @@
 from cprnc_py.netcdf.netcdf_variable import NetcdfVariable
 from cprnc_py.netcdf.netcdf_utils import apply_fillvalue
+import numpy as np
 
 class NetcdfVariableScipy(NetcdfVariable):
     """Adapter for the scipy netcdf_variable class, making it adapt to a common
@@ -47,7 +48,10 @@ class NetcdfVariableScipy(NetcdfVariable):
         """
 
         # FIXME(wjs, 2015-12-31) Will this work on scalar data?
-        vardata = self._var[dim_slices].copy()
+        if len(dim_slices) > 0:
+            vardata = self._var[dim_slices].copy()
+        else:
+            vardata = np.ndarray((0))
         # NOTE(wjs, 2015-12-23) We do our own application of the mask, rather
         # than relying on the maskandscale argument to netcdf_file, for two
         # reasons: (1) maskandscale was added very recently, and is not yet
