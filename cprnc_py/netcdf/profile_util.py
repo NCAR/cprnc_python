@@ -5,7 +5,6 @@ import math
 import cProfile
 import pstats
 import os
-from npfbuffer import npfbuffer
 import inspect
 
 def get_class_from_frame(fr):
@@ -52,12 +51,6 @@ def init_fn_tracer():
         outstr += '\n'
     print(outstr)
   return genGraph
-
-fname = "../../test_inputs/cam.h0.next.nc"
-f = open(fname)
-bf = npfbuffer(open("../../test_inputs/cam.h0.next.2.nc"))
-sz = os.stat(fname).st_size
-random.seed()
 
 def nullInit():
   return {}
@@ -129,6 +122,20 @@ def profFunction(fn, initfn = None, cleanfn = None, number = 1000):
       cleanfn(**args)
     return _profFunctionParams(fn, initfn, number, prof, cleanfn)
 
+import fs_utils
+
+tmpfs = fs_utils.find_tmpfs()[0]
+copyfn = '/gscratch/mdeakin/cprnc_python/copytest'
+
+def copy_py():
+  fs_utils.tmpfs_copy(copyfn, tmpfs)
+
+def copy_sh():
+  fs_utils.tmpfs_copy_sh(copyfn, tmpfs)
+
+def copy_clean():
+  fs_utils.rm_tmpfs_copy(copyfn, tmpfs)
+
 class FixedVar:
   def __init__(self, i):
     self.i = i
@@ -143,19 +150,12 @@ class MapVar:
 
 if __name__ == '__main__':
 
-  profs = [
-    # ("Original", randomHeight),
-    # ("Python", randomHeightPy),
-    # ("Numpy", randomHeightNP),
-    # ("Fixed name add variable", lambda: FixedVar(5344)),
-    # ("Dynamic name add variable", lambda: DynVar("i", 5344)),
-    # ("Map name add variable", lambda: MapVar("i", 5344))
-    ("Python 2 Format int", lambda: "%d" % 342005),
-    ("Python 3 Format int", lambda: "{:d}".format(342005)),
-    ("Python 2 Format string", lambda: "%s" % "hello, world"),
-    ("Python 3 Format string", lambda: "{:s}".format("hello, world"))
-    ]
+  profs = {
+    'Copy Python': {'fn': copy_py, 'initfn': None, 'cleanfn': copy_clean, 'number': 10},
+    'Copy Shell': {'fn': copy_sh, 'initfn': None, 'cleanfn': copy_clean, 'number': 10}
+    }
 
-  for name, fn in profs:
-    print(name)
-    profFunction(fn, None, 2 ** 20).print_stats()
+  for pName in profs:
+    print(pName)
+    profFunction(**profs[pName]).print_stats()
+    print()
