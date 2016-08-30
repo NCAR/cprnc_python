@@ -125,7 +125,7 @@ class VarDiffs(object):
         """Computes the differences of var1 and var2
 
         vars_differ must already be set for self."""
-        if self._diffs == None and not self.vars_differ():
+        if self._diffs is None and self.vars_differ():
             # Cache these for multiple uses
             self._diffs = var1 - var2
         return self._diffs
@@ -134,7 +134,7 @@ class VarDiffs(object):
         """Computes the sums of var1 and var2
 
         vars_differ must already be set for self."""
-        if self._sums == None and not self.vars_differ():
+        if self._sums == None and self.vars_differ():
             # Cache these for multiple uses
             self._sums = var1 + var2
         return self._sums
@@ -143,7 +143,7 @@ class VarDiffs(object):
         """Compute the relative difference statistics of var1 and var2.
 
         vars_differ must already be set for self."""
-        if (self.vars_differ() or len(var1) == 0):
+        if (not self.vars_differ() or len(var1) == 0):
             rdiff_max = np.float('nan')
             rdiff_maxloc = -1
             rdiff_logavg = np.float('nan')
@@ -153,19 +153,22 @@ class VarDiffs(object):
             rdiff_max = np.max(rdiff)
             rdiff_maxloc = np.argmax(rdiff)
             differences = self._compute_diffs(var1, var2) != 0
-            # Compute the sum of logs by taking the products of the logands; +1 if the logand is 0
-            # Then take the log of the result
-            # Since the log(1) is 0, this does not affect the final sum
-            rdiff_prod = np.prod(rdiff + ~differences)
-            if abs(rdiff_prod) != np.float('inf') or rdiff_prod == 0.0:
-                rdiff_logsum = -math.log10(rdiff_prod)
+            numDiffs = np.sum(differences)
+            if numDiffs > 0:
+                # Compute the sum of logs by taking the products of the logands; +1 if the logand is 0
+                # Then take the log of the result
+                # Since the log(1) is 0, this does not affect the final sum
+                rdiff_prod = np.prod(rdiff + ~differences)
+                if rdiff_prod != np.float('inf') and rdiff_prod > 0.0:
+                    rdiff_logsum = -math.log10(rdiff_prod)
+                else:
+                    # We need to use a different (slower, less accurate) method of computing this,
+                    # the product either overflowed or underflowed due to the small exponent
+                    rdiff_logs = np.log10(rdiff + ~differences)
+                    rdiff_logsum = np.sum(rdiff_logs)
                 rdiff_logavg = rdiff_logsum / np.sum(differences)
             else:
-                # We need to use a different (slower, less accurate) method of computing this,
-                # the product either overflowed or underflowed due to the small exponent
-                rdiff_logs = np.log10(rdiff + ~differences)
-                rdiff_logsum = np.sum(rdiff_logs)
-                rdiff_logavg = rdiff_logsum / np.sum(differences)
+                rdiff_logavg = float('nan')
         return rdiff_max, rdiff_maxloc, rdiff_logavg
 
     def _compute_dims_differ(self, var1, var2):
