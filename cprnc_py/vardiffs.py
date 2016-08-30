@@ -2,6 +2,7 @@ from __future__ import print_function
 
 import numpy as np
 import numpy.ma as ma
+import math
 from cprnc_py.numpy_utils import compress_two_arrays
 from cprnc_py.varinfo import VarInfo
 
@@ -156,8 +157,15 @@ class VarDiffs(object):
             # Then take the log of the result
             # Since the log(1) is 0, this does not affect the final sum
             rdiff_prod = np.prod(rdiff + ~differences)
-            rdiff_logsum = -np.log(rdiff_prod) / np.log(10)
-            rdiff_logavg = rdiff_logsum / np.sum(differences)
+            if abs(rdiff_prod) != np.float('inf') or rdiff_prod == 0.0:
+                rdiff_logsum = -math.log10(rdiff_prod)
+                rdiff_logavg = rdiff_logsum / np.sum(differences)
+            else:
+                # We need to use a different (slower, less accurate) method of computing this,
+                # the product either overflowed or underflowed due to the small exponent
+                rdiff_logs = np.log10(rdiff + ~differences)
+                rdiff_logsum = np.sum(rdiff_logs)
+                rdiff_logavg = rdiff_logsum / np.sum(differences)
         return rdiff_max, rdiff_maxloc, rdiff_logavg
 
     def _compute_dims_differ(self, var1, var2):
