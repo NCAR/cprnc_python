@@ -24,9 +24,12 @@ def find_tmpfs():
                 tmpfs.append(path)
     return tmpfs
 
-def get_tmpfname(fpath, tmpfs):
-    """Determines the absolute path to the tmpfs copy"""
-    fname = os.path.basename(fpath)
+def get_tmpfname(tmpfs):
+    """
+    Creates a random filename for the copy,
+    then returns the absolute path for the resulting copy
+    """
+    fname = ''.join(random.choice(string.ascii_uppercase + string.digits) for _ in range(10))
     return os.path.join(tmpfs, fname)
 
 def tmpfs_copy_py(fpath):
@@ -34,7 +37,7 @@ def tmpfs_copy_py(fpath):
     Uses Python's shutil to copy the file.
     This is slightly slower than using the subprocess module to use the copy utility
     """
-    tmpfname = get_tmpfname(fpath, find_tmpfs()[0])
+    tmpfname = get_tmpfname(find_tmpfs()[0])
     shutil.copyfile(fpath, tmpfname)
     return tmpfname
 
@@ -43,17 +46,10 @@ def tmpfs_copy_sh(fpath):
     Uses the copy utility through the subprocess module
     This is slightly less nice than using shutil, and more OS dependent
     """
-    tmpfname = get_tmpfname(fpath, find_tmpfs()[0])
+    tmpfname = get_tmpfname(find_tmpfs()[0])
     cpcmd = ['cp', fpath, tmpfname]
     p = subprocess.Popen(cpcmd)
     p.wait()
     return tmpfname
 
 tmpfs_copy = tmpfs_copy_sh
-
-def rm_tmpfs_copy(fpath):
-    """
-    Remove the tmpfs copy of the file
-    """
-    tmpfname = get_tmpfname(fpath, find_tmpfs()[0])
-    os.remove(tmpfname)
