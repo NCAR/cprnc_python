@@ -2,6 +2,8 @@
 import os
 import shutil
 import subprocess
+import random
+import string
 
 """
 OS Dependent utility
