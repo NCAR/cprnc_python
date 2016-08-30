@@ -1,4 +1,7 @@
 from __future__ import print_function
+from functools import partial
+from multiprocessing import Pool
+from cprnc_py.multiprocessing_fake import PoolFake
 from cprnc_py.vardiffs import (VarDiffs, VarDiffsNonNumeric)
 
 class FileDiffs(object):
@@ -30,7 +33,7 @@ class FileDiffs(object):
     # Constructor and other special methods
     # ------------------------------------------------------------------------
 
-    def __init__(self, file1, file2, separate_dim="time"):
+    def __init__(self, file1, file2, separate_dim="time", nprocs=None):
         """Create a FileDiffs object.
 
         Arguments:
@@ -39,12 +42,24 @@ class FileDiffs(object):
         separate_dim: name of dimension to separate along
             If not None or "", then for variables containing the given dimension,
             analysis is done separately for each slice along this dimension
+        nprocs: Number of tasks to use for the creation of the VarDiffs objects
+            nprocs = None (the default) means to use a single task, bypassing the
+            multiprocessing package.
+            nprocs = 1 menas to use a single task via the multiprocessing
+            package (this adds some overhead, and is just intended for testing)
+            nprocs > 1 means to use multiple tasks with the multiprocessing
+            package
         """
 
-        self._file1 = file1
-        self._file2 = file2
+        # TODO(wjs, 2016-01-05) This use of globals is bad. It's done for the
+        # sake of multiprocessing, but maybe there is some other way around it.
+        global _file1
+        global _file2
+        _file1 = file1
+        _file2 = file2
 
-        self._vardiffs_list = []
+        self._nprocs = nprocs
+
         if separate_dim:
             self._add_vardiffs_separated_by_dim(separate_dim)
         else:
@@ -137,13 +152,12 @@ class FileDiffs(object):
     def _add_vardiffs(self):
         """Add all of the vardiffs to self.
 
-        Assumes that self._file1 and self._file2 have already been set.
+        Assumes that globals _file1 and _file2 have already been set.
         """
 
-        for varname in sorted(self._file1.get_varlist()):
-            var_diffs = self._create_vardiffs(varname)
-            diff_wrapper = _DiffWrapper.no_slicing(var_diffs, varname)
-            self._add_one_vardiffs(diff_wrapper)
+        pool = self._create_pool()
+        self._vardiffs_list = \
+          list(pool.map(_create_vardiffs_wrapper_nodim, sorted(_file1.get_varlist())))
 
     def _add_vardiffs_separated_by_dim(self, dimname):
         """Add all of the vardiffs to self.
@@ -151,51 +165,86 @@ class FileDiffs(object):
         For variables containing the given dimension, analysis is done
         separately for each slice along this dimension.
 
-        Assumes that self._file1 and self._file2 have already been set.
+        Assumes that globals _file1 and _file2 have already been set.
         """
 
-        for (varname, index) in self._file1.get_varlist_bydim(dimname):
-            if index is None:
-                var_diffs = self._create_vardiffs(varname)
-                diff_wrapper = _DiffWrapper.no_slicing(var_diffs, varname)
-            else:
-                # For now, assume that we want the same index in file2 as in file1.
-                #
-                # TODO(wjs, 2015-12-31) (optional) allow for different indices,
-                # based on reading the associated coordinate variable and finding
-                # the matching coordinate (e.g., matching time).
-                var_diffs = self._create_vardiffs(varname, {dimname:index})
-                diff_wrapper = _DiffWrapper.dim_sliced(var_diffs, varname,
-                                                       dimname, index, index)
+        myfunc = partial(_create_vardiffs_wrapper, dimname=dimname)
+        pool = self._create_pool()
+        self._vardiffs_list = \
+          list(pool.map(myfunc, _file1.get_varlist_bydim(dimname)))
 
-            self._add_one_vardiffs(diff_wrapper)
+    def _create_pool(self):
+        """Return a multiprocessing Pool object that can be used for
+        parallelization"""
 
-    def _create_vardiffs(self, varname, dim_indices={}):
-        """Create and return a VarDiffs object.
-
-        Arguments:
-        varname: variable name
-        dim_indices: dictionary of (dimname:index) pairs giving dimension index or
-            indices to use for slicing the data (should agree with index_info)
-        """
-
-        # FIXME(wjs, 2015-12-24) Add handling of var not in file2 (maybe add
-        # a has_variable method to the netcdf class to help with this;
-        # otherwise, could just let it throw an exception)
-
-        if (self._file1.is_var_numeric(varname) and self._file2.is_var_numeric(varname)):
-            f1vdata = self._file1.get_vardata(varname, dim_indices)
-            f2vdata = self._file2.get_vardata(varname, dim_indices)
-            my_vardiffs = VarDiffs(varname, f1vdata, f2vdata)
+        if (self._nprocs):
+            return Pool(self._nprocs)
         else:
-            my_vardiffs = VarDiffsNonNumeric(varname)
+            return PoolFake()
 
-        return my_vardiffs
+# ------------------------------------------------------------------------
+# The following are defined outside the class so that they can be more
+# easily 'pickled' for the sake of parallelization
+# ------------------------------------------------------------------------
 
-    def _add_one_vardiffs(self, diff_wrapper):
-        """Add one _DiffWrapper object to the list."""
+def _create_vardiffs_wrapper_nodim(varname):
+    """Create one DiffWrapper object, with no separation by dimension.
+    Arguments:
+    varname: string
+    """
 
-        self._vardiffs_list.append(diff_wrapper)
+    return _create_vardiffs_wrapper((varname, None))
+
+
+def _create_vardiffs_wrapper(varname_index, dimname=None):
+    """Create one DiffWrapper object.
+
+    Arguments:
+    varname_index: tuple (varname, index)
+    dimname: dimension name (or None)
+    """
+
+    (varname, index) = varname_index
+
+    if index is None:
+        var_diffs = _create_vardiffs(varname)
+        diff_wrapper = _DiffWrapper.no_slicing(var_diffs, varname)
+    else:
+        # For now, assume that we want the same index in file2 as in file1.
+        #
+        # TODO(wjs, 2015-12-31) (optional) allow for different indices,
+        # based on reading the associated coordinate variable and finding
+        # the matching coordinate (e.g., matching time).
+        var_diffs = _create_vardiffs(varname, {dimname:index})
+        diff_wrapper = _DiffWrapper.dim_sliced(var_diffs, varname,
+                                               dimname, index, index)
+
+    return diff_wrapper
+
+
+def _create_vardiffs(varname, dim_indices={}):
+    """Create and return a VarDiffs object.
+
+    Arguments:
+    varname: variable name
+    dim_indices: dictionary of (dimname:index) pairs giving dimension index or
+        indices to use for slicing the data (should agree with index_info)
+    """
+
+    # FIXME(wjs, 2015-12-24) Add handling of var not in file2 (maybe add
+    # a has_variable method to the netcdf class to help with this;
+    # otherwise, could just let it throw an exception)
+
+    if (_file1.is_var_numeric(varname) and _file2.is_var_numeric(varname)):
+        my_vardiffs = VarDiffs(
+            varname,
+            _file1.get_vardata(varname, dim_indices),
+            _file2.get_vardata(varname, dim_indices))
+    else:
+        my_vardiffs = VarDiffsNonNumeric(varname)
+
+    return my_vardiffs
+
 
 class _DiffWrapper(object):
     """This class is used by FileDiffs to wrap instances of VarDiffs objects. It

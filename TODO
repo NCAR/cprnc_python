@@ -1,6 +1,13 @@
 Essential
 ---------
 
+- Figure out a way to make _file1 and _file2 in filediffs.py not have to be
+  globals (while still allowing for use of multiprocessing), since that kills the
+  ability to make more than one FileDiffs object.
+  - If this isn't possible, then make FileDiffs procedural rather than
+    object-oriented, so people don't try to make multiple FileDiffs objects that
+    may stomp on each other.
+
 - Implement get_global_attributes for netcdf_file_netcdf4.py
 
 - Implement get_attributes for netcdf_variable_netcdf4.py
@@ -42,10 +49,6 @@ Essential
 
 Nice to have
 ------------
-
-- Add tests of the Netcdf4 interface
-
-- Parallelize analysis loop, if this improves performance
 
 - Improve performance in other ways?
 
