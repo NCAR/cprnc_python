@@ -71,7 +71,7 @@ class VarInfo(object):
             self._min_val = 0
             self._min_loc = 0
             self._mean_absval = 0
-        if (var.shape[0] != 0):
+        if (var.ndim > 0):
             self._max_indices = np.unravel_index(self._max_loc, var.shape)
             self._min_indices = np.unravel_index(self._min_loc, var.shape)
         else:
