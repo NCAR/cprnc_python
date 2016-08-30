@@ -118,7 +118,7 @@ class VarDiffs(object):
 
             self._rmse = self._compute_rmse(var1c, var2c)
             self._normalized_rmse = self._compute_normalized_rmse(var1c, var2c)
-            self._relative_diffs = self._compute_relative_diffs(var1c, var2c)
+            self._rdiff_max, self._rdiff_maxloc, self._rdiff_logavg = self._compute_rdiff_stats(var1c, var2c)
 
     def _compute_diffs(self, var1, var2):
         """Computes the differences of var1 and var2
@@ -142,20 +142,20 @@ class VarDiffs(object):
         """Compute the relative difference statistics of var1 and var2.
 
         vars_differ must already be set for self."""
-        if (self.vars_differ()):
+        if (self.vars_differ() or len(var1) == 0):
             rdiff_max = np.float('nan')
             rdiff_maxloc = -1
             rdiff_logavg = np.float('nan')
         else:
-            maxvals = np.max(np.abs(var1), np.abs(var2))
-            rdiffs = np.abs(self._compute_diffs(var1, var2)) / maxvals
+            maxvals = np.maximum(np.abs(var1), np.abs(var2))
+            rdiff = np.abs(self._compute_diffs(var1, var2)) / maxvals
             rdiff_max = np.max(rdiff)
             rdiff_maxloc = np.argmax(rdiff)
             differences = self._compute_diffs(var1, var2) != 0
             # Compute the sum of logs by taking the products of the logands; +1 if the logand is 0
             # Then take the log of the result
             # Since the log(1) is 0, this does not affect the final sum
-            rdiff_prod = np.prod(rdiffs + ~differences)
+            rdiff_prod = np.prod(rdiff + ~differences)
             rdiff_logsum = -np.log(rdiff_prod) / np.log(10)
             rdiff_logavg = rdiff_logsum / np.sum(differences)
         return rdiff_max, rdiff_maxloc, rdiff_logavg
