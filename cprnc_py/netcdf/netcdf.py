@@ -243,7 +243,8 @@ class netcdf_file(object):
             raise ValueError("Mode must be either 'r', 'w' or 'a'.")
 
         if hasattr(filename, 'seek'):  # file-like
-            self.fp = fs_utils.tmpfs_copy(filename)
+            self.fp = filename
+            self.copy = False
             self.filename = 'None'
             if mmap is None:
                 mmap = False
@@ -251,6 +252,11 @@ class netcdf_file(object):
                 raise ValueError('Cannot use file object for mmap')
         else:  # maybe it's a string
             self.filename = fs_utils.tmpfs_copy(filename)
+            if self.filename == None:
+                self.copy = False
+                self.filename = filename
+            else:
+                self.copy = True
             omode = 'r+' if mode == 'a' else mode
             self.fp = open(self.filename, '%sb' % omode)
             if mmap is None:
@@ -314,7 +320,11 @@ class netcdf_file(object):
                             ), category=RuntimeWarning)
             self._mm = None
             self.fp.close()
-        os.remove(self.filename)
+        if self.copy:
+            try:
+                os.remove(self.filename)
+            except:
+                warnings.warn("Could not remove copy " + self.filename, category=RuntimeWarning)
     __del__ = close
 
     def __enter__(self):
