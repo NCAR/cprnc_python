@@ -36,8 +36,8 @@ class VarInfo(object):
 
     def __str__(self):
         mystr = "{:8d} {:8d} ".format(self._num_elements, self._num_valid)
-        mystr += "{:23.15e} {} ".format(self._max_val, index_str(self._max_indices))
-        mystr += "{:23.15e} {} ".format(self._min_val, index_str(self._min_indices))
+        mystr += "{:23.15e} {} ".format(float(self._max_val), index_str(self._max_indices))
+        mystr += "{:23.15e} {} ".format(float(self._min_val), index_str(self._min_indices))
         mystr += "{:23.15e}\n".format(self._mean_absval)
 
         return mystr
