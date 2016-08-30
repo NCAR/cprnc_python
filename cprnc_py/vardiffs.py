@@ -158,14 +158,14 @@ class VarDiffs(object):
                 # Compute the sum of logs by taking the products of the logands; +1 if the logand is 0
                 # Then take the log of the result
                 # Since the log(1) is 0, this does not affect the final sum
-                rdiff_prod = np.prod(rdiff + ~differences)
+                rdiff_prod = np.prod(rdiff[differences])
                 if rdiff_prod != np.float('inf') and rdiff_prod > 0.0:
                     rdiff_logsum = -math.log10(rdiff_prod)
                 else:
                     # We need to use a different (slower, less accurate) method of computing this,
                     # the product either overflowed or underflowed due to the small exponent
-                    rdiff_logs = np.log10(rdiff + ~differences)
-                    rdiff_logsum = np.sum(rdiff_logs)
+                    rdiff_logs = np.log10(rdiff[differences])
+                    rdiff_logsum = -np.sum(rdiff_logs)
                 rdiff_logavg = rdiff_logsum / np.sum(differences)
             else:
                 rdiff_logavg = float('nan')
@@ -186,11 +186,11 @@ class VarDiffs(object):
             return True
 
     def _compute_diffcount(self, var1, var2):
-        if self.vars_differ():
-            diff_count = 0
-        else:
+        if (self.vars_differ()):
             diffs = self._compute_diffs(var1, var2)
             diff_count = np.sum(diffs != 0)
+        else:
+            diff_count = 0
         return diff_count
 
     def _compute_rmse(self, var1, var2):
