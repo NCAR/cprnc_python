@@ -148,7 +148,7 @@ class VarDiffs(object):
             rdiff_logavg = np.float('nan')
         else:
             maxvals = np.max(np.abs(var1), np.abs(var2))
-            rdiffs = np.abs(self._compute_diffs(var1, var2))) / maxvals
+            rdiffs = np.abs(self._compute_diffs(var1, var2)) / maxvals
             rdiff_max = np.max(rdiff)
             rdiff_maxloc = np.argmax(rdiff)
             differences = self._compute_diffs(var1, var2) != 0
