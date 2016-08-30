@@ -98,11 +98,14 @@ class VarDiffs(object):
 
     def _compute_stats(self, var1, var2):
         self._dims_differ = self._compute_dims_differ(var1, var2)
+        self._diffs = None
+        self._sums = None
         if (self.dims_differ()):
             self._vars_differ = False
             self._masks_differ = False
             self._rmse = 0.
             self._normalized_rmse = 0.
+            self._relative_diffs = 0.
         else:
             self._masks_differ = self._compute_masks_differ(var1, var2)
 
@@ -114,9 +117,48 @@ class VarDiffs(object):
             self._vars_differ = not np.array_equal(var1c, var2c)
 
             self._rmse = self._compute_rmse(var1c, var2c)
-            # FIXME(wjs, 2016-01-03) The following is just a place-holder - we need
-            # the true calculation of normalized RMSE
-            self._normalized_rmse = self._rmse / 2
+            self._normalized_rmse = self._compute_normalized_rmse(var1c, var2c)
+            self._relative_diffs = self._compute_relative_diffs(var1c, var2c)
+
+    def _compute_diffs(self, var1, var2):
+        """Computes the differences of var1 and var2
+
+        vars_differ must already be set for self."""
+        if self._diffs == None and not self.vars_differ():
+            # Cache these for multiple uses
+            self._diffs = var1 - var2
+        return self._diffs
+
+    def _compute_sums(self, var1, var2):
+        """Computes the sums of var1 and var2
+
+        vars_differ must already be set for self."""
+        if self._sums == None and not self.vars_differ():
+            # Cache these for multiple uses
+            self._sums = var1 + var2
+        return self._sums
+
+    def _compute_rdiff_stats(self, var1, var2):
+        """Compute the relative difference statistics of var1 and var2.
+
+        vars_differ must already be set for self."""
+        if (self.vars_differ()):
+            rdiff_max = np.float('nan')
+            rdiff_maxloc = -1
+            rdiff_logavg = np.float('nan')
+        else:
+            maxvals = np.max(np.abs(var1), np.abs(var2))
+            rdiffs = np.abs(self._compute_diffs(var1, var2))) / maxvals
+            rdiff_max = np.max(rdiff)
+            rdiff_maxloc = np.argmax(rdiff)
+            differences = self._compute_diffs(var1, var2) != 0
+            # Compute the sum of logs by taking the products of the logands; +1 if the logand is 0
+            # Then take the log of the result
+            # Since the log(1) is 0, this does not affect the final sum
+            rdiff_prod = np.prod(rdiffs + ~differences)
+            rdiff_logsum = -np.log(rdiff_prod) / np.log(10)
+            rdiff_logavg = rdiff_logsum / np.sum(differences)
+        return rdiff_max, rdiff_maxloc, rdiff_logavg
 
     def _compute_dims_differ(self, var1, var2):
         if (var1.shape == var2.shape):
@@ -132,16 +174,35 @@ class VarDiffs(object):
         else:
             return True
 
+    def _compute_diffcount(self, var1, var2):
+        if self.vars_differ():
+            diff_count = 0
+        else:
+            diffs = self._compute_diffs(var1, var2)
+            diff_count = np.sum(diffs != 0)
+        return diff_count
+
     def _compute_rmse(self, var1, var2):
         """Compute the RMS Error between var1 and var2.
 
         vars_differ must already be set for self."""
 
         if (self.vars_differ()):
-            rmse = np.sqrt(((var1 - var2) ** 2).mean())
+            rmse = np.sqrt((self._compute_diffs(var1, var2) ** 2).mean())
         else:
             rmse = 0.
         return rmse
+
+    def _compute_normalized_rmse(self, var1, var2):
+        """Compute the normalized RMSE between var1 and var2.
+
+        vars_differ must already be set for self."""
+        if (self.vars_differ()):
+            norm = (np.average(np.abs(var1)) + np.average(np.abs(var2))) / 2.0
+            nrmse = self._compute_rmse(var1, var2) / norm
+        else:
+            nrmse = 0.
+        return nrmse
 
 class VarDiffsNonNumeric(object):
     """This version of VarDiffs is used for non-numeric variables.
