@@ -43,15 +43,12 @@ from operator import mul
 import mmap as mm
 import sys
 import types
-import os
 
 import numpy as np
 from numpy.compat import asbytes, asstr
 from numpy import fromstring, dtype, empty, array, asarray
 from numpy import little_endian as LITTLE_ENDIAN
 from functools import reduce
-
-import cprnc_py.netcdf.fs_utils as fs_utils
 
 PY3 = sys.version_info[0] == 3
 
@@ -245,19 +242,13 @@ class netcdf_file(object):
 
         if hasattr(filename, 'seek'):  # file-like
             self.fp = filename
-            self.copy = False
             self.filename = 'None'
             if mmap is None:
                 mmap = False
             elif mmap and not hasattr(filename, 'fileno'):
                 raise ValueError('Cannot use file object for mmap')
         else:  # maybe it's a string
-            self.filename = fs_utils.tmpfs_copy(filename)
-            if self.filename == None:
-                self.copy = False
-                self.filename = filename
-            else:
-                self.copy = True
+            self.filename = filename
             omode = 'r+' if mode == 'a' else mode
             self.fp = open(self.filename, '%sb' % omode)
             if mmap is None:
@@ -316,19 +307,14 @@ class netcdf_file(object):
                         # we cannot close self._mm, since self._mm_buf is
                         # alive and there may still be arrays referring to it
                         warnings.warn((
-                                "Cannot close a netcdf_file opened with mmap=True, when "
-                                "netcdf_variables or arrays referring to its data still exist. "
-                                "All data arrays obtained from such files refer directly to "
-                                "data on disk, and must be copied before the file can be cleanly "
-                                "closed. (See netcdf_file docstring for more information on mmap.)"
-                                ), category=RuntimeWarning)
+                            "Cannot close a netcdf_file opened with mmap=True, when "
+                            "netcdf_variables or arrays referring to its data still exist. "
+                            "All data arrays obtained from such files refer directly to "
+                            "data on disk, and must be copied before the file can be cleanly "
+                            "closed. (See netcdf_file docstring for more information on mmap.)"
+                        ), category=RuntimeWarning)
                 self._mm = None
                 self.fp.close()
-        if self.copy:
-            try:
-                os.remove(self.filename)
-            except:
-                warnings.warn("Could not remove copy " + self.filename, category=RuntimeWarning)
     __del__ = close
 
     def __enter__(self):
