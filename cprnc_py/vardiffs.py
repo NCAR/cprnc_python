@@ -92,6 +92,11 @@ class VarDiffs(object):
         """Return True if the variables could not be analyzed"""
 
         return False
+
+    def fields_nonshared(self):
+        """Return True if the fields are not shared"""
+
+        return False
     
     # ------------------------------------------------------------------------
     # Private methods
@@ -168,7 +173,7 @@ class VarDiffs(object):
                     rdiff_logsum = -np.sum(rdiff_logs)
                 rdiff_logavg = rdiff_logsum / np.sum(differences)
             else:
-                rdiff_logavg = float('nan')
+                rdiff_logavg = np.float('nan')
         return rdiff_max, rdiff_maxloc, rdiff_logavg
 
     def _compute_dims_differ(self, var1, var2):
@@ -215,18 +220,17 @@ class VarDiffs(object):
             nrmse = 0.
         return nrmse
 
-class VarDiffsNonNumeric(object):
-    """This version of VarDiffs is used for non-numeric variables.
+class VarDiffsNonAnalyzable(object):
+    """This version of VarDiffs is used for non-analyzable variables.
 
-    Usage is the same as for the standard VarDiffs.
+    Usage is the same as for the standard Vardiffs.
     """
 
     def __init__(self, varname):
         self._varname = varname
 
     def __str__(self):
-        mystr = "Non-numeric variable could not be analyzed"
-        return mystr
+        raise NotImplementedError("")
 
     def vars_differ(self):
         return False
@@ -237,5 +241,37 @@ class VarDiffsNonNumeric(object):
     def dims_differ(self):
         return False
 
+    def fields_nonshared(self):
+        return False
+
     def could_not_be_analyzed(self):
+        return True
+
+class VarDiffsNonNumeric(VarDiffsNonAnalyzable):
+    """This version of VarDiffs is used for non-numeric variables.
+
+    Usage is the same as for the standard VarDiffs.
+    """
+
+    def __init__(self, varname):
+        super(VarDiffsNonNumeric, self).__init__(varname)
+
+    def __str__(self):
+        mystr = "Non-numeric variable could not be analyzed"
+        return mystr
+
+class VarDiffsUnsharedVar(VarDiffsNonAnalyzable):
+    """This version of VarDiffs is used for non-numeric variables.
+
+    Usage is the same as for the standard VarDiffs.
+    """
+
+    def __init__(self, varname):
+        super(VarDiffsUnsharedVar, self).__init__(varname)
+
+    def __str__(self):
+        mystr = "Unshared variable could not be analyzed"
+        return mystr
+
+    def fields_nonshared(self):
         return True

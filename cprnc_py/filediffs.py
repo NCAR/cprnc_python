@@ -2,7 +2,7 @@ from __future__ import print_function
 from functools import partial
 from multiprocessing import Pool
 from cprnc_py.multiprocessing_fake import PoolFake
-from cprnc_py.vardiffs import (VarDiffs, VarDiffsNonNumeric)
+from cprnc_py.vardiffs import (VarDiffs, VarDiffsNonNumeric, VarDiffsUnsharedVar)
 
 class FileDiffs(object):
     """This class computes statistics about the differences between two netcdf
@@ -60,7 +60,9 @@ class FileDiffs(object):
 
         self._nprocs = nprocs
 
-        if separate_dim:
+        if (separate_dim
+            and separate_dim in file1.get_dimlist()
+            and separate_dim in file2.get_dimlist()):
             self._add_vardiffs_separated_by_dim(separate_dim)
         else:
             self._add_vardiffs()
@@ -72,7 +74,6 @@ class FileDiffs(object):
         for var in self._vardiffs_list:
             mystr = mystr + str(var) + "\n\n"
 
-        mystr = mystr + "*" * 132 + "\n\n"
         mystr = mystr + "SUMMARY of cprnc:\n"
         # FIXME(wjs, 2015-12-26) is it right to include the
         # could-not-be-analyzed fields in the 'total number' count? (If not,
@@ -88,6 +89,8 @@ class FileDiffs(object):
             self.num_dims_differ())
         mystr = mystr + "               and {0:6d} could not be analyzed (e.g., strings)\n".format(
             self.num_could_not_be_analyzed())
+        mystr = mystr + "               and {0:6d} variables did not exist in both files\n".format(
+            self.num_nonshared_fields())
         # FIXME(wjs, 2015-12-26) Add count of fields not found
 
         mystr = mystr + "  diff_test: the two files seem to be "
@@ -130,6 +133,11 @@ class FileDiffs(object):
 
         return sum([var.var_diffs.could_not_be_analyzed() for var in self._vardiffs_list])
 
+    def num_nonshared_fields(self):
+        """Returns a count of the number of fields that are different."""
+
+        return sum([var.var_diffs.fields_nonshared() for var in self._vardiffs_list])
+
     def files_differ(self):
         """Returns a boolean variable saying whether the two files differ in any
         meaningful way."""
@@ -156,8 +164,9 @@ class FileDiffs(object):
         """
 
         pool = self._create_pool()
+        vlist = sorted(set(_file1.get_varlist()) | set(_file2.get_varlist()), key=lambda v: v.lower())
         self._vardiffs_list = \
-          list(pool.map(_create_vardiffs_wrapper_nodim, sorted(_file1.get_varlist())))
+          list(pool.map(_create_vardiffs_wrapper_nodim, vlist))
 
     def _add_vardiffs_separated_by_dim(self, dimname):
         """Add all of the vardiffs to self.
@@ -169,9 +178,12 @@ class FileDiffs(object):
         """
 
         myfunc = partial(_create_vardiffs_wrapper, dimname=dimname)
+        vl1 = set(_file1.get_varlist_bydim(dimname))
+        vl2 = set(_file2.get_varlist_bydim(dimname))
+        vlist = sorted(vl1 | vl2, key=lambda v: v[0].lower())
         pool = self._create_pool()
         self._vardiffs_list = \
-          list(pool.map(myfunc, _file1.get_varlist_bydim(dimname)))
+          sorted(list(pool.map(myfunc, vlist)), key=lambda v: v.var_diffs._varname.lower())
 
     def _create_pool(self):
         """Return a multiprocessing Pool object that can be used for
@@ -231,18 +243,21 @@ def _create_vardiffs(varname, dim_indices={}):
         indices to use for slicing the data (should agree with index_info)
     """
 
-    # FIXME(wjs, 2015-12-24) Add handling of var not in file2 (maybe add
-    # a has_variable method to the netcdf class to help with this;
-    # otherwise, could just let it throw an exception)
-
-    if (_file1.is_var_numeric(varname) and _file2.is_var_numeric(varname)):
-        my_vardiffs = VarDiffs(
-            varname,
-            _file1.get_vardata(varname, dim_indices),
-            _file2.get_vardata(varname, dim_indices))
+    filesWithVar = []
+    varIsNumeric = True
+    for f in (_file1, _file2):
+        if (f.has_variable(varname)):
+            filesWithVar.append(f)
+            varIsNumeric = varIsNumeric and f.is_var_numeric(varname)
+    if (len(filesWithVar) == 2):
+        if (varIsNumeric):
+            v1 = _file1.get_vardata(varname, dim_indices)
+            v2 = _file2.get_vardata(varname, dim_indices)
+            my_vardiffs = VarDiffs(varname, v1, v2)
+        else:
+            my_vardiffs = VarDiffsNonNumeric(varname)
     else:
-        my_vardiffs = VarDiffsNonNumeric(varname)
-
+        my_vardiffs = VarDiffsUnsharedVar(varname)
     return my_vardiffs
 
 

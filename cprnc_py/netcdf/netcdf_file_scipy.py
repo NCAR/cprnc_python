@@ -41,6 +41,10 @@ class NetcdfFileScipy(NetcdfFile):
         # see any other way to do this
         return self._file._attributes
 
+    def get_dimlist(self):
+        """Returns a list of dimensions in the netcdf file"""
+        return self._file.dimensions.keys()
+
     def get_dimsize(self, dimname):
         """Returns the size of the given dimension.
 
@@ -66,3 +70,6 @@ class NetcdfFileScipy(NetcdfFile):
 
         return NetcdfVariableScipy(self._file.variables[varname])
 
+    def has_variable(self, varname):
+        """Returns True if the Netcdf file has the requested variable, otherwise False"""
+        return varname in self._file.variables
