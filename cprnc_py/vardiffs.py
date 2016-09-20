@@ -253,21 +253,26 @@ class VarDiffsNonNumeric(VarDiffsNonAnalyzable):
     Usage is the same as for the standard VarDiffs.
     """
 
-    def __init__(self, varname):
-        super(VarDiffsNonNumeric, self).__init__(varname)
-
     def __str__(self):
         mystr = "Non-numeric variable could not be analyzed"
         return mystr
+
+class VarDiffsDimSizeDiff(VarDiffsNonAnalyzable):
+    """This version of VarDiffs is used for variables with different dimensions.
+
+    Usage is the same as for the standard VarDiffs.
+    """
+
+    def __str__(self):
+        mystr = "Variable with different dimension sizes could not be analyzed"
+        return mystr
+
 
 class VarDiffsUnsharedVar(VarDiffsNonAnalyzable):
     """This version of VarDiffs is used for non-numeric variables.
 
     Usage is the same as for the standard VarDiffs.
     """
-
-    def __init__(self, varname):
-        super(VarDiffsUnsharedVar, self).__init__(varname)
 
     def __str__(self):
         mystr = "Unshared variable could not be analyzed"

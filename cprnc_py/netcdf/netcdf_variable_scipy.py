@@ -48,7 +48,29 @@ class NetcdfVariableScipy(NetcdfVariable):
         """
 
         if len(dim_slices) > 0:
-            vardata = self._var[dim_slices].copy()
+            # TODO(mfd, 2016-09-19) Find a better way of doing this
+            # Alternatively, match the Fortran version and don't
+            # process variables with different shapes
+            try:
+                vardata = self._var[dim_slices].copy()
+            except IndexError as err:
+                vardata = []
+                for i in dim_slices:
+                    try:
+                        data = self._var[i]
+                    except IndexError:
+                        try:
+                            for j in i:
+                                try:
+                                    vardata.append(self._var[j])
+                                except IndexError:
+                                    vardata.append(np.float('nan'))
+                        except TypeError:
+                            vardata.append(np.float('nan'))
+                    else:
+                        vardata.append(data)
+                return np.array(vardata)
+
         else:
             # Scalar data
             vardata = np.array(self._var.getValue())
