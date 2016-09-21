@@ -64,9 +64,9 @@ class NetcdfVariableScipy(NetcdfVariable):
                                 try:
                                     vardata.append(self._var[j])
                                 except IndexError:
-                                    vardata.append(np.float('nan'))
+                                    pass
                         except TypeError:
-                            vardata.append(np.float('nan'))
+                            pass
                     else:
                         vardata.append(data)
                 return np.array(vardata)

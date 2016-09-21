@@ -2,7 +2,7 @@ from __future__ import print_function
 from functools import partial
 from multiprocessing import Pool
 from cprnc_py.multiprocessing_fake import PoolFake
-from cprnc_py.vardiffs import (VarDiffs, VarDiffsNonNumeric, VarDiffsUnsharedVar)
+from cprnc_py.vardiffs import (VarDiffs, VarDiffsNonNumeric, VarDiffsUnsharedVar, VarDiffsDimSizeDiff)
 
 class FileDiffs(object):
     """This class computes statistics about the differences between two netcdf
@@ -164,7 +164,8 @@ class FileDiffs(object):
         """
 
         pool = self._create_pool()
-        vlist = sorted(set(_file1.get_varlist()) | set(_file2.get_varlist()), key=lambda v: v.lower())
+        vlist = sorted(set(_file1.get_varlist()) | set(_file2.get_varlist()),
+                       key=lambda v: v.lower())
         self._vardiffs_list = \
           list(pool.map(_create_vardiffs_wrapper_nodim, vlist))
 
@@ -253,7 +254,10 @@ def _create_vardiffs(varname, dim_indices={}):
         if (varIsNumeric):
             v1 = _file1.get_vardata(varname, dim_indices)
             v2 = _file2.get_vardata(varname, dim_indices)
-            my_vardiffs = VarDiffs(varname, v1, v2)
+            if (v1.shape == v2.shape):
+                my_vardiffs = VarDiffs(varname, v1, v2)
+            else:
+                my_vardiffs = VarDiffsDimSizeDiff(varname)
         else:
             my_vardiffs = VarDiffsNonNumeric(varname)
     else:
