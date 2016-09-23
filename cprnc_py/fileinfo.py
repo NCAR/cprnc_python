@@ -44,7 +44,8 @@ class FileInfo(object):
         """
         self._file = ncfile
         self._nprocs = nprocs
-        if (separate_dim and separate_dim in ncfile.get_dimlist()):
+        self._varlist = []
+        if (separate_dim and separate_dim in ncfile.get_varlist()):
             self._add_separated_varinfo(separate_dim)
         else:
             self._add_varinfo()
@@ -52,7 +53,7 @@ class FileInfo(object):
     def __str__(self):
         mystr = ""
         numNonNumeric = 0
-        for var in self.varlist:
+        for var in self._varlist:
             mystr += str(var) + "\n\n"
             if type(var) == VarInfoNonNumeric:
                 numNonNumeric += 1
@@ -62,6 +63,9 @@ class FileInfo(object):
                   "non-numeric").format(len(self.varlist), numNonNumeric)
         return mystr
 
+    def _add_separated_varinfo(dim):
+        pass
+
     def _add_varinfo():
         q = Queue()
         vnamelist = self._file.get_varlist()
@@ -70,10 +74,10 @@ class FileInfo(object):
                  for varname in vnamelist]
         for p in procs:
             p.start()
-        self.varlist = []
+        self._varlist = []
         for p in procs:
             p.join()
-            self.varlist.append(q.get())
+            self._varlist.append(q.get())
 
 def _create_varinfo_wrapper(f, varname, q, dim_indices={}):
     if not f.has_variable(varname):
@@ -82,5 +86,5 @@ def _create_varinfo_wrapper(f, varname, q, dim_indices={}):
     if not f.is_var_numeric(varname):
         q.put(VarInfoNonNumeric(varname))
         return
-    q.put(VarInfo(f.get_vardata(varname, dim_indices)))
+    q.put(VarInfo(f.get_vardata(varname, dim_indices), varname))
     return
