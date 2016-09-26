@@ -60,31 +60,51 @@ class FileInfo(object):
         mystr += ("SUMMARY of cprnc_singlefile\n" +
                   "A total of {0:6d} fields were analyzed\n" +
                   "        of which {1:6d} were " +
-                  "non-numeric").format(len(self.varlist), numNonNumeric)
+                  "non-numeric").format(len(self._varlist), numNonNumeric)
         return mystr
 
-    def _add_separated_varinfo(dim):
-        pass
+    def _add_separated_varinfo(self, dim):
+        q = Queue()
+        procs = []
+        for (varname, index) in self._file.get_varlist_bydim(dim):
+            if index is None:
+                p = Process(target=_create_varinfo_wrapper,
+                            args=(self._file, varname, q, {}))
+                p.start()
+                procs.append(p)
+                pass
+            else:
+                p = Process(target=_create_varinfo_wrapper,
+                            args=(self._file, varname, q, {dim: index}))
+                p.start()
+                procs.append(p)
+        self._varlist = []
+        for p in procs:
+            p.join()
+            info, indices = q.get()
+            if indices == {}:
+                self._varlist.append(info)
+            else:
+                self._varlist.append(info)
 
-    def _add_varinfo():
+    def _add_varinfo(self):
         q = Queue()
         vnamelist = self._file.get_varlist()
         procs = [Process(target=_create_varinfo_wrapper,
-                         args=(self._file, varname, q, None))
+                         args=(self._file, varname, q, {}))
                  for varname in vnamelist]
         for p in procs:
             p.start()
         self._varlist = []
         for p in procs:
             p.join()
-            self._varlist.append(q.get())
+            self._varlist.append(q.get()[0])
 
 def _create_varinfo_wrapper(f, varname, q, dim_indices={}):
-    if not f.has_variable(varname):
-        q.put(None)
-        return
     if not f.is_var_numeric(varname):
-        q.put(VarInfoNonNumeric(varname))
+        q.put((VarInfoNonNumeric(varname), None))
         return
-    q.put(VarInfo(f.get_vardata(varname, dim_indices), varname))
+    varinfo = VarInfo(f.get_vardata(varname, dim_indices), varname)
+    a = (varinfo, dim_indices)
+    q.put(a)
     return
