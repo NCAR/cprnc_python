@@ -51,12 +51,8 @@ class FileDiffs(object):
             package
         """
 
-        # TODO(wjs, 2016-01-05) This use of globals is bad. It's done for the
-        # sake of multiprocessing, but maybe there is some other way around it.
-        global _file1
-        global _file2
-        _file1 = file1
-        _file2 = file2
+        self._file1 = file1
+        self._file2 = file2
 
         self._nprocs = nprocs
 
@@ -160,14 +156,16 @@ class FileDiffs(object):
     def _add_vardiffs(self):
         """Add all of the vardiffs to self.
 
-        Assumes that globals _file1 and _file2 have already been set.
+        Assumes that self._file1 and self._file2 have already been set.
         """
 
+        myfunc = partial(_create_vardiffs_wrapper_nodim, file1=self._file1,
+                         file2=self._file2)
         pool = self._create_pool()
-        vlist = sorted(set(_file1.get_varlist()) | set(_file2.get_varlist()),
+        vlist = sorted(set(self._file1.get_varlist()) | set(self._file2.get_varlist()),
                        key=lambda v: v.lower())
         self._vardiffs_list = \
-          list(pool.map(_create_vardiffs_wrapper_nodim, vlist))
+          list(pool.map(myfunc, vlist))
 
     def _add_vardiffs_separated_by_dim(self, dimname):
         """Add all of the vardiffs to self.
@@ -175,12 +173,13 @@ class FileDiffs(object):
         For variables containing the given dimension, analysis is done
         separately for each slice along this dimension.
 
-        Assumes that globals _file1 and _file2 have already been set.
+        Assumes that self._file1 and self._file2 have already been set.
         """
 
-        myfunc = partial(_create_vardiffs_wrapper, dimname=dimname)
-        vl1 = set(_file1.get_varlist_bydim(dimname))
-        vl2 = set(_file2.get_varlist_bydim(dimname))
+        myfunc = partial(_create_vardiffs_wrapper, file1=self._file1,
+                         file2=self._file2, dimname=dimname)
+        vl1 = set(self._file1.get_varlist_bydim(dimname))
+        vl2 = set(self._file2.get_varlist_bydim(dimname))
         vlist = sorted(vl1 | vl2, key=lambda v: v[0].lower())
         pool = self._create_pool()
         self._vardiffs_list = \
@@ -200,27 +199,29 @@ class FileDiffs(object):
 # easily 'pickled' for the sake of parallelization
 # ------------------------------------------------------------------------
 
-def _create_vardiffs_wrapper_nodim(varname):
+def _create_vardiffs_wrapper_nodim(varname, file1, file2):
     """Create one DiffWrapper object, with no separation by dimension.
     Arguments:
+    file1, file2: NetcdfFile
     varname: string
     """
 
-    return _create_vardiffs_wrapper((varname, None))
+    return _create_vardiffs_wrapper((varname, None), file1, file2)
 
 
-def _create_vardiffs_wrapper(varname_index, dimname=None):
+def _create_vardiffs_wrapper(varname_index, file1, file2, dimname=None):
     """Create one DiffWrapper object.
 
     Arguments:
     varname_index: tuple (varname, index)
+    file1, file2: NetcdfFile
     dimname: dimension name (or None)
     """
 
     (varname, index) = varname_index
 
     if index is None:
-        var_diffs = _create_vardiffs(varname)
+        var_diffs = _create_vardiffs(varname, file1, file2)
         diff_wrapper = _DiffWrapper.no_slicing(var_diffs, varname)
     else:
         # For now, assume that we want the same index in file2 as in file1.
@@ -228,17 +229,18 @@ def _create_vardiffs_wrapper(varname_index, dimname=None):
         # TODO(wjs, 2015-12-31) (optional) allow for different indices,
         # based on reading the associated coordinate variable and finding
         # the matching coordinate (e.g., matching time).
-        var_diffs = _create_vardiffs(varname, {dimname:index})
+        var_diffs = _create_vardiffs(varname, file1, file2, {dimname:index})
         diff_wrapper = _DiffWrapper.dim_sliced(var_diffs, varname,
                                                dimname, index, index)
 
     return diff_wrapper
 
 
-def _create_vardiffs(varname, dim_indices={}):
+def _create_vardiffs(varname, file1, file2, dim_indices={}):
     """Create and return a VarDiffs object.
 
     Arguments:
+    file1, file2: NetcdfFile
     varname: variable name
     dim_indices: dictionary of (dimname:index) pairs giving dimension index or
         indices to use for slicing the data (should agree with index_info)
@@ -246,14 +248,14 @@ def _create_vardiffs(varname, dim_indices={}):
 
     filesWithVar = []
     varIsNumeric = True
-    for f in (_file1, _file2):
+    for f in (file1, file2):
         if (f.has_variable(varname)):
             filesWithVar.append(f)
             varIsNumeric = varIsNumeric and f.is_var_numeric(varname)
     if (len(filesWithVar) == 2):
         if (varIsNumeric):
-            v1 = _file1.get_vardata(varname, dim_indices)
-            v2 = _file2.get_vardata(varname, dim_indices)
+            v1 = file1.get_vardata(varname, dim_indices)
+            v2 = file2.get_vardata(varname, dim_indices)
             if (v1.shape == v2.shape):
                 my_vardiffs = VarDiffs(varname, v1, v2)
             else:
