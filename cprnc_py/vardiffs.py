@@ -267,9 +267,11 @@ class VarDiffsDimSizeDiff(VarDiffsNonAnalyzable):
         mystr = "Variable with different dimension sizes could not be analyzed"
         return mystr
 
+    def dims_differ(self):
+        return True
 
 class VarDiffsUnsharedVar(VarDiffsNonAnalyzable):
-    """This version of VarDiffs is used for non-numeric variables.
+    """This version of VarDiffs is used for variables which aren't shared.
 
     Usage is the same as for the standard VarDiffs.
     """

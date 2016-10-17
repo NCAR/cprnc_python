@@ -70,22 +70,16 @@ class FileInfo(object):
             if index is None:
                 p = Process(target=_create_varinfo_wrapper,
                             args=(self._file, varname, q, {}))
-                p.start()
-                procs.append(p)
-                pass
             else:
                 p = Process(target=_create_varinfo_wrapper,
                             args=(self._file, varname, q, {dim: index}))
-                p.start()
-                procs.append(p)
+            p.start()
+            procs.append(p)
         self._varlist = []
         for p in procs:
             p.join()
             info, indices = q.get()
-            if indices == {}:
-                self._varlist.append(info)
-            else:
-                self._varlist.append(info)
+            self._varlist.append(info)
 
     def _add_varinfo(self):
         q = Queue()
