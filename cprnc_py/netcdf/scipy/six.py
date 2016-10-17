@@ -70,7 +70,7 @@ def _add_doc(func, doc):
 
 
 def _import_module(name):
-v    """Import module, returning the module after the last dot."""
+    """Import module, returning the module after the last dot."""
     __import__(name)
     return sys.modules[name]
 
