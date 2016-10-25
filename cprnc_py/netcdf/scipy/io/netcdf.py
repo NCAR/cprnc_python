@@ -15,7 +15,6 @@ Only NetCDF3 is supported here; for NetCDF4 see
 `netCDF4-python <http://unidata.github.io/netcdf4-python/>`__,
 which has a similar API.
 
-This was snapshot in from SciPy v0.18.0-1
 """
 
 from __future__ import division, print_function, absolute_import
@@ -41,8 +40,6 @@ import warnings
 import weakref
 from operator import mul
 import mmap as mm
-import sys
-import types
 
 import numpy as np
 from numpy.compat import asbytes, asstr
@@ -50,7 +47,7 @@ from numpy import fromstring, dtype, empty, array, asarray
 from numpy import little_endian as LITTLE_ENDIAN
 from functools import reduce
 
-from cprnc_py.netcdf.scipy.six import integer_types, text_type, binary_type
+from scipy._lib.six import integer_types, text_type, binary_type
 
 ABSENT = b'\x00\x00\x00\x00\x00\x00\x00\x00'
 ZERO = b'\x00\x00\x00\x00'
