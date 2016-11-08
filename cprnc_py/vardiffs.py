@@ -270,15 +270,44 @@ class VarDiffsDimSizeDiff(VarDiffsNonAnalyzable):
     def dims_differ(self):
         return True
 
-class VarDiffsUnsharedVar(VarDiffsNonAnalyzable):
+class VarDiffsUnsharedVar(object):
     """This version of VarDiffs is used for variables which aren't shared.
 
     Usage is the same as for the standard VarDiffs.
     """
 
+    def __init__(self, varname, found_in_filenum):
+        """Create a VarDiffsUnsharedVar object
+
+        Args:
+            varname (str): name of variable
+            found_in_filenum (int): file number in which the variable is found;
+                e.g., if it's fuond in file #1 but not in file #2, then
+                found_in_filenum should be 1
+        """
+        self._varname = varname
+        self._found_in_filenum = found_in_filenum
+
     def __str__(self):
-        mystr = "Unshared variable could not be analyzed"
+        if self._found_in_filenum == 1:
+            other_filenum = 2
+        else:
+            other_filenum = 1
+        mystr = "Field found in file {} not found in file {}".format(
+            self._found_in_filenum, other_filenum)
         return mystr
+
+    def vars_differ(self):
+        return False
+
+    def masks_differ(self):
+        return False
+
+    def dims_differ(self):
+        return False
 
     def fields_nonshared(self):
         return True
+
+    def could_not_be_analyzed(self):
+        return False
