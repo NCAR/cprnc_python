@@ -1,6 +1,6 @@
 # Wrapper for scipy.io.netcdf, providing a common interface
 
-from cprnc_py.netcdf.scipy.netcdf import netcdf_file as scipy_netcdf_file
+from cprnc_py.netcdf.scipy.io.netcdf import netcdf_file as scipy_netcdf_file
 from cprnc_py.netcdf.netcdf_file import NetcdfFile
 from cprnc_py.netcdf.netcdf_variable_scipy import NetcdfVariableScipy
 from cprnc_py.netcdf.fs_utils import tmpfs_copy
