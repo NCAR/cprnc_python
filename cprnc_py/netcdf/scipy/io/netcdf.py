@@ -40,9 +40,6 @@ import warnings
 import weakref
 from operator import mul
 import mmap as mm
-import sys
-import types
-import os
 
 import numpy as np
 from numpy.compat import asbytes, asstr
@@ -50,24 +47,7 @@ from numpy import fromstring, dtype, empty, array, asarray
 from numpy import little_endian as LITTLE_ENDIAN
 from functools import reduce
 
-import cprnc_py.netcdf.fs_utils as fs_utils
-
-PY3 = sys.version_info[0] == 3
-
-if PY3:
-    string_types = str,
-    integer_types = int,
-    class_types = type,
-    text_type = str
-    binary_type = bytes
-
-    MAXSIZE = sys.maxsize
-else:
-    string_types = basestring,
-    integer_types = (int, long)
-    class_types = (type, types.ClassType)
-    text_type = unicode
-    binary_type = str
+from scipy._lib.six import integer_types, text_type, binary_type
 
 ABSENT = b'\x00\x00\x00\x00\x00\x00\x00\x00'
 ZERO = b'\x00\x00\x00\x00'
@@ -244,19 +224,13 @@ class netcdf_file(object):
 
         if hasattr(filename, 'seek'):  # file-like
             self.fp = filename
-            self.copy = False
             self.filename = 'None'
             if mmap is None:
                 mmap = False
             elif mmap and not hasattr(filename, 'fileno'):
                 raise ValueError('Cannot use file object for mmap')
         else:  # maybe it's a string
-            self.filename = fs_utils.tmpfs_copy(filename)
-            if self.filename == None:
-                self.copy = False
-                self.filename = filename
-            else:
-                self.copy = True
+            self.filename = filename
             omode = 'r+' if mode == 'a' else mode
             self.fp = open(self.filename, '%sb' % omode)
             if mmap is None:
@@ -301,30 +275,28 @@ class netcdf_file(object):
     def close(self):
         """Closes the NetCDF file."""
         if not self.fp.closed:
-            self.variables = {}
-            if self._mm_buf is not None:
-                ref = weakref.ref(self._mm_buf)
-                self._mm_buf = None
-                if ref() is None:
-                    # self._mm_buf is gc'd, and we can close the mmap
-                    self._mm.close()
-                else:
-                    # we cannot close self._mm, since self._mm_buf is
-                    # alive and there may still be arrays referring to it
-                    warnings.warn((
+            try:
+                self.flush()
+            finally:
+                self.variables = {}
+                if self._mm_buf is not None:
+                    ref = weakref.ref(self._mm_buf)
+                    self._mm_buf = None
+                    if ref() is None:
+                        # self._mm_buf is gc'd, and we can close the mmap
+                        self._mm.close()
+                    else:
+                        # we cannot close self._mm, since self._mm_buf is
+                        # alive and there may still be arrays referring to it
+                        warnings.warn((
                             "Cannot close a netcdf_file opened with mmap=True, when "
                             "netcdf_variables or arrays referring to its data still exist. "
                             "All data arrays obtained from such files refer directly to "
                             "data on disk, and must be copied before the file can be cleanly "
                             "closed. (See netcdf_file docstring for more information on mmap.)"
-                            ), category=RuntimeWarning)
-            self._mm = None
-            self.fp.close()
-        if self.copy:
-            try:
-                os.remove(self.filename)
-            except:
-                warnings.warn("Could not remove copy " + self.filename, category=RuntimeWarning)
+                        ), category=RuntimeWarning)
+                self._mm = None
+                self.fp.close()
     __del__ = close
 
     def __enter__(self):
@@ -332,6 +304,272 @@ class netcdf_file(object):
 
     def __exit__(self, type, value, traceback):
         self.close()
+
+    def createDimension(self, name, length):
+        """
+        Adds a dimension to the Dimension section of the NetCDF data structure.
+
+        Note that this function merely adds a new dimension that the variables can
+        reference.  The values for the dimension, if desired, should be added as
+        a variable using `createVariable`, referring to this dimension.
+
+        Parameters
+        ----------
+        name : str
+            Name of the dimension (Eg, 'lat' or 'time').
+        length : int
+            Length of the dimension.
+
+        See Also
+        --------
+        createVariable
+
+        """
+        if length is None and self._dims:
+            raise ValueError("Only first dimension may be unlimited!")
+
+        self.dimensions[name] = length
+        self._dims.append(name)
+
+    def createVariable(self, name, type, dimensions):
+        """
+        Create an empty variable for the `netcdf_file` object, specifying its data
+        type and the dimensions it uses.
+
+        Parameters
+        ----------
+        name : str
+            Name of the new variable.
+        type : dtype or str
+            Data type of the variable.
+        dimensions : sequence of str
+            List of the dimension names used by the variable, in the desired order.
+
+        Returns
+        -------
+        variable : netcdf_variable
+            The newly created ``netcdf_variable`` object.
+            This object has also been added to the `netcdf_file` object as well.
+
+        See Also
+        --------
+        createDimension
+
+        Notes
+        -----
+        Any dimensions to be used by the variable should already exist in the
+        NetCDF data structure or should be created by `createDimension` prior to
+        creating the NetCDF variable.
+
+        """
+        shape = tuple([self.dimensions[dim] for dim in dimensions])
+        shape_ = tuple([dim or 0 for dim in shape])  # replace None with 0 for numpy
+
+        type = dtype(type)
+        typecode, size = type.char, type.itemsize
+        if (typecode, size) not in REVERSE:
+            raise ValueError("NetCDF 3 does not support type %s" % type)
+
+        data = empty(shape_, dtype=type.newbyteorder("B"))  # convert to big endian always for NetCDF 3
+        self.variables[name] = netcdf_variable(
+                data, typecode, size, shape, dimensions,
+                maskandscale=self.maskandscale)
+        return self.variables[name]
+
+    def flush(self):
+        """
+        Perform a sync-to-disk flush if the `netcdf_file` object is in write mode.
+
+        See Also
+        --------
+        sync : Identical function
+
+        """
+        if hasattr(self, 'mode') and self.mode in 'wa':
+            self._write()
+    sync = flush
+
+    def _write(self):
+        self.fp.seek(0)
+        self.fp.write(b'CDF')
+        self.fp.write(array(self.version_byte, '>b').tostring())
+
+        # Write headers and data.
+        self._write_numrecs()
+        self._write_dim_array()
+        self._write_gatt_array()
+        self._write_var_array()
+
+    def _write_numrecs(self):
+        # Get highest record count from all record variables.
+        for var in self.variables.values():
+            if var.isrec and len(var.data) > self._recs:
+                self.__dict__['_recs'] = len(var.data)
+        self._pack_int(self._recs)
+
+    def _write_dim_array(self):
+        if self.dimensions:
+            self.fp.write(NC_DIMENSION)
+            self._pack_int(len(self.dimensions))
+            for name in self._dims:
+                self._pack_string(name)
+                length = self.dimensions[name]
+                self._pack_int(length or 0)  # replace None with 0 for record dimension
+        else:
+            self.fp.write(ABSENT)
+
+    def _write_gatt_array(self):
+        self._write_att_array(self._attributes)
+
+    def _write_att_array(self, attributes):
+        if attributes:
+            self.fp.write(NC_ATTRIBUTE)
+            self._pack_int(len(attributes))
+            for name, values in attributes.items():
+                self._pack_string(name)
+                self._write_values(values)
+        else:
+            self.fp.write(ABSENT)
+
+    def _write_var_array(self):
+        if self.variables:
+            self.fp.write(NC_VARIABLE)
+            self._pack_int(len(self.variables))
+
+            # Sort variable names non-recs first, then recs.
+            def sortkey(n):
+                v = self.variables[n]
+                if v.isrec:
+                    return (-1,)
+                return v._shape
+            variables = sorted(self.variables, key=sortkey, reverse=True)
+
+            # Set the metadata for all variables.
+            for name in variables:
+                self._write_var_metadata(name)
+            # Now that we have the metadata, we know the vsize of
+            # each record variable, so we can calculate recsize.
+            self.__dict__['_recsize'] = sum([
+                    var._vsize for var in self.variables.values()
+                    if var.isrec])
+            # Set the data for all variables.
+            for name in variables:
+                self._write_var_data(name)
+        else:
+            self.fp.write(ABSENT)
+
+    def _write_var_metadata(self, name):
+        var = self.variables[name]
+
+        self._pack_string(name)
+        self._pack_int(len(var.dimensions))
+        for dimname in var.dimensions:
+            dimid = self._dims.index(dimname)
+            self._pack_int(dimid)
+
+        self._write_att_array(var._attributes)
+
+        nc_type = REVERSE[var.typecode(), var.itemsize()]
+        self.fp.write(asbytes(nc_type))
+
+        if not var.isrec:
+            vsize = var.data.size * var.data.itemsize
+            vsize += -vsize % 4
+        else:  # record variable
+            try:
+                vsize = var.data[0].size * var.data.itemsize
+            except IndexError:
+                vsize = 0
+            rec_vars = len([v for v in self.variables.values()
+                            if v.isrec])
+            if rec_vars > 1:
+                vsize += -vsize % 4
+        self.variables[name].__dict__['_vsize'] = vsize
+        self._pack_int(vsize)
+
+        # Pack a bogus begin, and set the real value later.
+        self.variables[name].__dict__['_begin'] = self.fp.tell()
+        self._pack_begin(0)
+
+    def _write_var_data(self, name):
+        var = self.variables[name]
+
+        # Set begin in file header.
+        the_beguine = self.fp.tell()
+        self.fp.seek(var._begin)
+        self._pack_begin(the_beguine)
+        self.fp.seek(the_beguine)
+
+        # Write data.
+        if not var.isrec:
+            self.fp.write(var.data.tostring())
+            count = var.data.size * var.data.itemsize
+            self.fp.write(b'0' * (var._vsize - count))
+        else:  # record variable
+            # Handle rec vars with shape[0] < nrecs.
+            if self._recs > len(var.data):
+                shape = (self._recs,) + var.data.shape[1:]
+                var.data.resize(shape)
+
+            pos0 = pos = self.fp.tell()
+            for rec in var.data:
+                # Apparently scalars cannot be converted to big endian. If we
+                # try to convert a ``=i4`` scalar to, say, '>i4' the dtype
+                # will remain as ``=i4``.
+                if not rec.shape and (rec.dtype.byteorder == '<' or
+                        (rec.dtype.byteorder == '=' and LITTLE_ENDIAN)):
+                    rec = rec.byteswap()
+                self.fp.write(rec.tostring())
+                # Padding
+                count = rec.size * rec.itemsize
+                self.fp.write(b'0' * (var._vsize - count))
+                pos += self._recsize
+                self.fp.seek(pos)
+            self.fp.seek(pos0 + var._vsize)
+
+    def _write_values(self, values):
+        if hasattr(values, 'dtype'):
+            nc_type = REVERSE[values.dtype.char, values.dtype.itemsize]
+        else:
+            types = [(t, NC_INT) for t in integer_types]
+            types += [
+                    (float, NC_FLOAT),
+                    (str, NC_CHAR)
+                    ]
+            # bytes index into scalars in py3k.  Check for "string" types
+            if isinstance(values, text_type) or isinstance(values, binary_type):
+                sample = values
+            else:
+                try:
+                    sample = values[0]  # subscriptable?
+                except TypeError:
+                    sample = values     # scalar
+
+            for class_, nc_type in types:
+                if isinstance(sample, class_):
+                    break
+
+        typecode, size = TYPEMAP[nc_type]
+        dtype_ = '>%s' % typecode
+        # asarray() dies with bytes and '>c' in py3k.  Change to 'S'
+        dtype_ = 'S' if dtype_ == '>c' else dtype_
+
+        values = asarray(values, dtype=dtype_)
+
+        self.fp.write(asbytes(nc_type))
+
+        if values.dtype.char == 'S':
+            nelems = values.itemsize
+        else:
+            nelems = values.size
+        self._pack_int(nelems)
+
+        if not values.shape and (values.dtype.byteorder == '<' or
+                (values.dtype.byteorder == '=' and LITTLE_ENDIAN)):
+            values = values.byteswap()
+        self.fp.write(values.tostring())
+        count = values.size * values.itemsize
+        self.fp.write(b'0' * (-count % 4))  # pad
 
     def _read(self):
         # Check magic bytes and version

@@ -92,6 +92,11 @@ class VarDiffs(object):
         """Return True if the variables could not be analyzed"""
 
         return False
+
+    def fields_nonshared(self):
+        """Return True if the fields are not shared"""
+
+        return False
     
     # ------------------------------------------------------------------------
     # Private methods
@@ -158,17 +163,17 @@ class VarDiffs(object):
                 # Compute the sum of logs by taking the products of the logands; +1 if the logand is 0
                 # Then take the log of the result
                 # Since the log(1) is 0, this does not affect the final sum
-                rdiff_prod = np.prod(rdiff + ~differences)
+                rdiff_prod = np.prod(rdiff[differences])
                 if rdiff_prod != np.float('inf') and rdiff_prod > 0.0:
                     rdiff_logsum = -math.log10(rdiff_prod)
                 else:
                     # We need to use a different (slower, less accurate) method of computing this,
                     # the product either overflowed or underflowed due to the small exponent
-                    rdiff_logs = np.log10(rdiff + ~differences)
-                    rdiff_logsum = np.sum(rdiff_logs)
+                    rdiff_logs = np.log10(rdiff[differences])
+                    rdiff_logsum = -np.sum(rdiff_logs)
                 rdiff_logavg = rdiff_logsum / np.sum(differences)
             else:
-                rdiff_logavg = float('nan')
+                rdiff_logavg = np.float('nan')
         return rdiff_max, rdiff_maxloc, rdiff_logavg
 
     def _compute_dims_differ(self, var1, var2):
@@ -186,11 +191,11 @@ class VarDiffs(object):
             return True
 
     def _compute_diffcount(self, var1, var2):
-        if self.vars_differ():
-            diff_count = 0
-        else:
+        if (self.vars_differ()):
             diffs = self._compute_diffs(var1, var2)
             diff_count = np.sum(diffs != 0)
+        else:
+            diff_count = 0
         return diff_count
 
     def _compute_rmse(self, var1, var2):
@@ -215,17 +220,81 @@ class VarDiffs(object):
             nrmse = 0.
         return nrmse
 
-class VarDiffsNonNumeric(object):
-    """This version of VarDiffs is used for non-numeric variables.
+class VarDiffsNonAnalyzable(object):
+    """This version of VarDiffs is used for non-analyzable variables.
 
-    Usage is the same as for the standard VarDiffs.
+    Usage is the same as for the standard Vardiffs.
     """
 
     def __init__(self, varname):
         self._varname = varname
 
     def __str__(self):
+        raise NotImplementedError("")
+
+    def vars_differ(self):
+        return False
+
+    def masks_differ(self):
+        return False
+
+    def dims_differ(self):
+        return False
+
+    def fields_nonshared(self):
+        return False
+
+    def could_not_be_analyzed(self):
+        return True
+
+class VarDiffsNonNumeric(VarDiffsNonAnalyzable):
+    """This version of VarDiffs is used for non-numeric variables.
+
+    Usage is the same as for the standard VarDiffs.
+    """
+
+    def __str__(self):
         mystr = "Non-numeric variable could not be analyzed"
+        return mystr
+
+class VarDiffsDimSizeDiff(VarDiffsNonAnalyzable):
+    """This version of VarDiffs is used for variables with different dimensions.
+
+    Usage is the same as for the standard VarDiffs.
+    """
+
+    def __str__(self):
+        mystr = "Variable with different dimension sizes could not be analyzed"
+        return mystr
+
+    def dims_differ(self):
+        return True
+
+class VarDiffsUnsharedVar(object):
+    """This version of VarDiffs is used for variables which aren't shared.
+
+    Usage is the same as for the standard VarDiffs.
+    """
+
+    def __init__(self, varname, found_in_filenum):
+        """Create a VarDiffsUnsharedVar object
+
+        Args:
+            varname (str): name of variable
+            found_in_filenum (int): file number in which the variable is found;
+                e.g., if it's fuond in file #1 but not in file #2, then
+                found_in_filenum should be 1
+        """
+        self._varname = varname
+        self._found_in_filenum = found_in_filenum
+
+    def __str__(self):
+        if self._found_in_filenum == 1:
+            other_filenum = 2
+        else:
+            other_filenum = 1
+        mystr = "Field found in file {} not found in file {}".format(
+            self._found_in_filenum, other_filenum)
         return mystr
 
     def vars_differ(self):
@@ -237,5 +306,8 @@ class VarDiffsNonNumeric(object):
     def dims_differ(self):
         return False
 
-    def could_not_be_analyzed(self):
+    def fields_nonshared(self):
         return True
+
+    def could_not_be_analyzed(self):
+        return False

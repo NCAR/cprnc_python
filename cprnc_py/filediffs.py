@@ -2,7 +2,7 @@ from __future__ import print_function
 from functools import partial
 from multiprocessing import Pool
 from cprnc_py.multiprocessing_fake import PoolFake
-from cprnc_py.vardiffs import (VarDiffs, VarDiffsNonNumeric)
+from cprnc_py.vardiffs import (VarDiffs, VarDiffsNonNumeric, VarDiffsUnsharedVar, VarDiffsDimSizeDiff)
 
 class FileDiffs(object):
     """This class computes statistics about the differences between two netcdf
@@ -72,7 +72,6 @@ class FileDiffs(object):
         for var in self._vardiffs_list:
             mystr = mystr + str(var) + "\n\n"
 
-        mystr = mystr + "*" * 132 + "\n\n"
         mystr = mystr + "SUMMARY of cprnc:\n"
         # FIXME(wjs, 2015-12-26) is it right to include the
         # could-not-be-analyzed fields in the 'total number' count? (If not,
@@ -86,9 +85,10 @@ class FileDiffs(object):
             self.num_masks_differ())
         mystr = mystr + "               and {0:6d} had differences in dimension sizes\n".format(
             self.num_dims_differ())
-        mystr = mystr + "               and {0:6d} could not be analyzed (e.g., strings)\n".format(
+        mystr = mystr + " A total number of {0:6d} fields could not be analyzed (e.g., strings and fields with different dimension sizes)\n".format(
             self.num_could_not_be_analyzed())
-        # FIXME(wjs, 2015-12-26) Add count of fields not found
+        mystr = mystr + " A total number of {0:6d} fields did not exist in both files\n".format(
+            self.num_nonshared_fields())
 
         mystr = mystr + "  diff_test: the two files seem to be "
         if (self.files_differ()):
@@ -130,6 +130,11 @@ class FileDiffs(object):
 
         return sum([var.var_diffs.could_not_be_analyzed() for var in self._vardiffs_list])
 
+    def num_nonshared_fields(self):
+        """Returns a count of the number of fields that are different."""
+
+        return sum([var.var_diffs.fields_nonshared() for var in self._vardiffs_list])
+
     def files_differ(self):
         """Returns a boolean variable saying whether the two files differ in any
         meaningful way."""
@@ -156,8 +161,19 @@ class FileDiffs(object):
         """
 
         pool = self._create_pool()
-        self._vardiffs_list = \
-          list(pool.map(_create_vardiffs_wrapper_nodim, sorted(_file1.get_varlist())))
+        vlist1 = set(_file1.get_varlist())
+        vlist2 = set(_file2.get_varlist())
+        vlist_shared = vlist1 & vlist2
+        self._vardiffs_list = list(pool.map(_create_vardiffs_wrapper_nodim, vlist_shared))
+        vlist_1_not_2 = vlist1 - vlist2
+        vlist_2_not_1 = vlist2 - vlist1
+        for i, vlist_nonshared in enumerate((vlist_1_not_2, vlist_2_not_1)):
+            found_in_filenum = i + 1
+            for varname in vlist_nonshared:
+                var_diffs = VarDiffsUnsharedVar(varname, found_in_filenum)
+                diff_wrapper = _DiffWrapper.no_slicing(var_diffs, varname)
+                self._add_one_vardiffs(diff_wrapper)
+        self._vardiffs_list.sort(key=diff_wrapper_sort_key)
 
     def _add_vardiffs_separated_by_dim(self, dimname):
         """Add all of the vardiffs to self.
@@ -169,9 +185,21 @@ class FileDiffs(object):
         """
 
         myfunc = partial(_create_vardiffs_wrapper, dimname=dimname)
+        vlist1 = set(_file1.get_varlist_bydim(dimname))
+        vlist2 = set(_file2.get_varlist_bydim(dimname))
+        vlist_shared = vlist1 & vlist2
         pool = self._create_pool()
-        self._vardiffs_list = \
-          list(pool.map(myfunc, _file1.get_varlist_bydim(dimname)))
+        self._vardiffs_list = list(pool.map(myfunc, vlist_shared))
+        vlist_1_not_2 = vlist1 - vlist2
+        vlist_2_not_1 = vlist2 - vlist1
+        for i, vlist_nonshared in enumerate((vlist_1_not_2, vlist_2_not_1)):
+            found_in_filenum = i + 1
+            for (varname, index) in vlist_nonshared:
+                var_diffs = VarDiffsUnsharedVar(varname, found_in_filenum)
+                diff_wrapper = _DiffWrapper.dim_sliced(var_diffs, varname, dimname,
+                                                       index, index)
+                self._add_one_vardiffs(diff_wrapper)
+        self._vardiffs_list.sort(key=diff_wrapper_sort_key)
 
     def _create_pool(self):
         """Return a multiprocessing Pool object that can be used for
@@ -181,6 +209,11 @@ class FileDiffs(object):
             return Pool(self._nprocs)
         else:
             return PoolFake()
+
+    def _add_one_vardiffs(self, diff_wrapper):
+        """Add one _DiffWrapper object to the list."""
+
+        self._vardiffs_list.append(diff_wrapper)
 
 # ------------------------------------------------------------------------
 # The following are defined outside the class so that they can be more
@@ -225,21 +258,26 @@ def _create_vardiffs_wrapper(varname_index, dimname=None):
 def _create_vardiffs(varname, dim_indices={}):
     """Create and return a VarDiffs object.
 
+    Assumes that the given varname and dim_indices are present on both files
+
     Arguments:
     varname: variable name
     dim_indices: dictionary of (dimname:index) pairs giving dimension index or
         indices to use for slicing the data (should agree with index_info)
     """
 
-    # FIXME(wjs, 2015-12-24) Add handling of var not in file2 (maybe add
-    # a has_variable method to the netcdf class to help with this;
-    # otherwise, could just let it throw an exception)
+    varIsNumeric = True
+    for f in (_file1, _file2):
+        if (f.has_variable(varname)):
+            varIsNumeric = varIsNumeric and f.is_var_numeric(varname)
 
-    if (_file1.is_var_numeric(varname) and _file2.is_var_numeric(varname)):
-        my_vardiffs = VarDiffs(
-            varname,
-            _file1.get_vardata(varname, dim_indices),
-            _file2.get_vardata(varname, dim_indices))
+    if (varIsNumeric):
+        v1 = _file1.get_vardata(varname, dim_indices)
+        v2 = _file2.get_vardata(varname, dim_indices)
+        if (v1.shape == v2.shape):
+            my_vardiffs = VarDiffs(varname, v1, v2)
+        else:
+            my_vardiffs = VarDiffsDimSizeDiff(varname)
     else:
         my_vardiffs = VarDiffsNonNumeric(varname)
 
@@ -313,3 +351,21 @@ class _DiffWrapper(object):
         mystr = mystr + "\n"
         mystr = mystr + str(self.var_diffs)
         return mystr
+
+# ------------------------------------------------------------------------
+# Sort functions
+# ------------------------------------------------------------------------
+
+def diff_wrapper_sort_key(diff_wrapper):
+    """Given a _DiffWrapper object, returns a key that can be used for sorting
+
+    Args:
+        diff_wrapper: object of type _DiffWrapper
+    """
+    name = diff_wrapper.varname.lower()
+    index = diff_wrapper.index1
+    if index is None:
+        # make sure an index of 'None' appears before any numeric index
+        index = float("-inf")
+    return (name, index)
+
